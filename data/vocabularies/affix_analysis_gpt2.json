@@ -1,0 +1,2715 @@
+{
+  "tokenizer": "gpt2",
+  "coverage_summary": {
+    "total_affixes": 92,
+    "in_vocabulary": 41,
+    "need_decomposition": 51,
+    "coverage_rate": 0.44565217391304346
+  },
+  "in_vocabulary": [
+    "de",
+    "di",
+    "ga",
+    "hi",
+    "hin",
+    "hing",
+    "him",
+    "ka",
+    "i",
+    "ika",
+    "in",
+    "ma",
+    "mag",
+    "may",
+    "na",
+    "pa",
+    "sa",
+    "san",
+    "sam",
+    "sing",
+    "tag",
+    "um",
+    "ado",
+    "an",
+    "ana",
+    "ano",
+    "era",
+    "ero",
+    "han",
+    "ay",
+    "ing",
+    "ismo",
+    "ista",
+    "ita",
+    "ito",
+    "oy",
+    "nan",
+    "nin",
+    "ng",
+    "rin",
+    "s"
+  ],
+  "decompositions": {
+    "de": [
+      {
+        "tokens": [
+          "de"
+        ],
+        "token_ids": [
+          2934
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "di": [
+      {
+        "tokens": [
+          "di"
+        ],
+        "token_ids": [
+          10989
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "ga": [
+      {
+        "tokens": [
+          "ga"
+        ],
+        "token_ids": [
+          4908
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "hi": [
+      {
+        "tokens": [
+          "hi"
+        ],
+        "token_ids": [
+          5303
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "hin": [
+      {
+        "tokens": [
+          "hin"
+        ],
+        "token_ids": [
+          20079
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "hing": [
+      {
+        "tokens": [
+          "hing"
+        ],
+        "token_ids": [
+          722
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "him": [
+      {
+        "tokens": [
+          "him"
+        ],
+        "token_ids": [
+          38400
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "ka": [
+      {
+        "tokens": [
+          "ka"
+        ],
+        "token_ids": [
+          4914
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "kaka": [
+      {
+        "tokens": [
+          "ka",
+          "ka"
+        ],
+        "token_ids": [
+          4914,
+          4914
+        ],
+        "score": 13.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "k",
+          "a",
+          "ka"
+        ],
+        "token_ids": [
+          74,
+          64,
+          4914
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ka",
+          "k",
+          "a"
+        ],
+        "token_ids": [
+          4914,
+          74,
+          64
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      }
+    ],
+    "kasing": [
+      {
+        "tokens": [
+          "ka",
+          "sing"
+        ],
+        "token_ids": [
+          4914,
+          12215
+        ],
+        "score": 10.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ka",
+          "si",
+          "ng"
+        ],
+        "token_ids": [
+          4914,
+          13396,
+          782
+        ],
+        "score": 10.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "kas",
+          "ing"
+        ],
+        "token_ids": [
+          42749,
+          278
+        ],
+        "score": 9.5,
+        "type": "optimal"
+      }
+    ],
+    "kawalang": [
+      {
+        "tokens": [
+          "ka",
+          "wa",
+          "lang"
+        ],
+        "token_ids": [
+          4914,
+          10247,
+          17204
+        ],
+        "score": 10.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ka",
+          "wal",
+          "ang"
+        ],
+        "token_ids": [
+          4914,
+          16783,
+          648
+        ],
+        "score": 10.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ka",
+          "wa",
+          "la",
+          "ng"
+        ],
+        "token_ids": [
+          4914,
+          10247,
+          5031,
+          782
+        ],
+        "score": 8.0,
+        "type": "optimal"
+      }
+    ],
+    "labing": [
+      {
+        "tokens": [
+          "lab",
+          "ing"
+        ],
+        "token_ids": [
+          23912,
+          278
+        ],
+        "score": 9.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "la",
+          "bing"
+        ],
+        "token_ids": [
+          5031,
+          4623
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "la",
+          "bi",
+          "ng"
+        ],
+        "token_ids": [
+          5031,
+          8482,
+          782
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      }
+    ],
+    "i": [
+      {
+        "tokens": [
+          "i"
+        ],
+        "token_ids": [
+          72
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "ika": [
+      {
+        "tokens": [
+          "ika"
+        ],
+        "token_ids": [
+          9232
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "in": [
+      {
+        "tokens": [
+          "in"
+        ],
+        "token_ids": [
+          259
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "ipa": [
+      {
+        "tokens": [
+          "i",
+          "pa"
+        ],
+        "token_ids": [
+          72,
+          8957
+        ],
+        "score": 11.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ip",
+          "a"
+        ],
+        "token_ids": [
+          541,
+          64
+        ],
+        "score": 9.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "i",
+          "p",
+          "a"
+        ],
+        "token_ids": [
+          72,
+          79,
+          64
+        ],
+        "score": 7.5,
+        "type": "optimal"
+      }
+    ],
+    "ipag": [
+      {
+        "tokens": [
+          "ip",
+          "ag"
+        ],
+        "token_ids": [
+          541,
+          363
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "i",
+          "pa",
+          "g"
+        ],
+        "token_ids": [
+          72,
+          8957,
+          70
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "i",
+          "p",
+          "ag"
+        ],
+        "token_ids": [
+          72,
+          79,
+          363
+        ],
+        "score": 7.0,
+        "type": "optimal"
+      }
+    ],
+    "ipang": [
+      {
+        "tokens": [
+          "i",
+          "pa",
+          "ng"
+        ],
+        "token_ids": [
+          72,
+          8957,
+          782
+        ],
+        "score": 10.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ip",
+          "ang"
+        ],
+        "token_ids": [
+          541,
+          648
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ip",
+          "a",
+          "ng"
+        ],
+        "token_ids": [
+          541,
+          64,
+          782
+        ],
+        "score": 8.0,
+        "type": "optimal"
+      }
+    ],
+    "ma": [
+      {
+        "tokens": [
+          "ma"
+        ],
+        "token_ids": [
+          2611
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "mag": [
+      {
+        "tokens": [
+          "mag"
+        ],
+        "token_ids": [
+          19726
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "magka": [
+      {
+        "tokens": [
+          "mag",
+          "ka"
+        ],
+        "token_ids": [
+          19726,
+          4914
+        ],
+        "score": 13.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ma",
+          "g",
+          "ka"
+        ],
+        "token_ids": [
+          2611,
+          70,
+          4914
+        ],
+        "score": 10.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "mag",
+          "k",
+          "a"
+        ],
+        "token_ids": [
+          19726,
+          74,
+          64
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      }
+    ],
+    "magkaka": [
+      {
+        "tokens": [
+          "mag",
+          "ka",
+          "ka"
+        ],
+        "token_ids": [
+          19726,
+          4914,
+          4914
+        ],
+        "score": 13.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ma",
+          "g",
+          "ka",
+          "ka"
+        ],
+        "token_ids": [
+          2611,
+          70,
+          4914,
+          4914
+        ],
+        "score": 10.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "mag",
+          "k",
+          "aka"
+        ],
+        "token_ids": [
+          19726,
+          74,
+          8130
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      }
+    ],
+    "magpa": [
+      {
+        "tokens": [
+          "mag",
+          "pa"
+        ],
+        "token_ids": [
+          19726,
+          8957
+        ],
+        "score": 13.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ma",
+          "g",
+          "pa"
+        ],
+        "token_ids": [
+          2611,
+          70,
+          8957
+        ],
+        "score": 10.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ma",
+          "gp",
+          "a"
+        ],
+        "token_ids": [
+          2611,
+          31197,
+          64
+        ],
+        "score": 10.0,
+        "type": "optimal"
+      }
+    ],
+    "magpaka": [
+      {
+        "tokens": [
+          "mag",
+          "pa",
+          "ka"
+        ],
+        "token_ids": [
+          19726,
+          8957,
+          4914
+        ],
+        "score": 13.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "mag",
+          "pak",
+          "a"
+        ],
+        "token_ids": [
+          19726,
+          41091,
+          64
+        ],
+        "score": 10.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ma",
+          "g",
+          "pa",
+          "ka"
+        ],
+        "token_ids": [
+          2611,
+          70,
+          8957,
+          4914
+        ],
+        "score": 10.0,
+        "type": "optimal"
+      }
+    ],
+    "magsi": [
+      {
+        "tokens": [
+          "mag",
+          "si"
+        ],
+        "token_ids": [
+          19726,
+          13396
+        ],
+        "score": 11.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ma",
+          "gs",
+          "i"
+        ],
+        "token_ids": [
+          2611,
+          14542,
+          72
+        ],
+        "score": 10.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ma",
+          "g",
+          "si"
+        ],
+        "token_ids": [
+          2611,
+          70,
+          13396
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      }
+    ],
+    "maka": [
+      {
+        "tokens": [
+          "ma",
+          "ka"
+        ],
+        "token_ids": [
+          2611,
+          4914
+        ],
+        "score": 13.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "m",
+          "a",
+          "ka"
+        ],
+        "token_ids": [
+          76,
+          64,
+          4914
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ma",
+          "k",
+          "a"
+        ],
+        "token_ids": [
+          2611,
+          74,
+          64
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      }
+    ],
+    "maki": [
+      {
+        "tokens": [
+          "ma",
+          "ki"
+        ],
+        "token_ids": [
+          2611,
+          4106
+        ],
+        "score": 11.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ma",
+          "k",
+          "i"
+        ],
+        "token_ids": [
+          2611,
+          74,
+          72
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "m",
+          "a",
+          "ki"
+        ],
+        "token_ids": [
+          76,
+          64,
+          4106
+        ],
+        "score": 7.5,
+        "type": "optimal"
+      }
+    ],
+    "makipag": [
+      {
+        "tokens": [
+          "ma",
+          "ki",
+          "pa",
+          "g"
+        ],
+        "token_ids": [
+          2611,
+          4106,
+          8957,
+          70
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ma",
+          "ki",
+          "p",
+          "ag"
+        ],
+        "token_ids": [
+          2611,
+          4106,
+          79,
+          363
+        ],
+        "score": 6.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ma",
+          "k",
+          "i",
+          "pa",
+          "g"
+        ],
+        "token_ids": [
+          2611,
+          74,
+          72,
+          8957,
+          70
+        ],
+        "score": 6.5,
+        "type": "optimal"
+      }
+    ],
+    "mala": [
+      {
+        "tokens": [
+          "ma",
+          "la"
+        ],
+        "token_ids": [
+          2611,
+          5031
+        ],
+        "score": 11.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "mal",
+          "a"
+        ],
+        "token_ids": [
+          7617,
+          64
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ma",
+          "l",
+          "a"
+        ],
+        "token_ids": [
+          2611,
+          75,
+          64
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      }
+    ],
+    "mang": [
+      {
+        "tokens": [
+          "ma",
+          "ng"
+        ],
+        "token_ids": [
+          2611,
+          782
+        ],
+        "score": 11.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "man",
+          "g"
+        ],
+        "token_ids": [
+          805,
+          70
+        ],
+        "score": 7.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ma",
+          "n",
+          "g"
+        ],
+        "token_ids": [
+          2611,
+          77,
+          70
+        ],
+        "score": 7.5,
+        "type": "optimal"
+      }
+    ],
+    "mam": [
+      {
+        "tokens": [
+          "ma",
+          "m"
+        ],
+        "token_ids": [
+          2611,
+          76
+        ],
+        "score": 10.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "m",
+          "am"
+        ],
+        "token_ids": [
+          76,
+          321
+        ],
+        "score": 8.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "m",
+          "a",
+          "m"
+        ],
+        "token_ids": [
+          76,
+          64,
+          76
+        ],
+        "score": 6.0,
+        "type": "optimal"
+      }
+    ],
+    "mapa": [
+      {
+        "tokens": [
+          "ma",
+          "pa"
+        ],
+        "token_ids": [
+          2611,
+          8957
+        ],
+        "score": 13.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "map",
+          "a"
+        ],
+        "token_ids": [
+          8899,
+          64
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "m",
+          "a",
+          "pa"
+        ],
+        "token_ids": [
+          76,
+          64,
+          8957
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      }
+    ],
+    "mapag": [
+      {
+        "tokens": [
+          "ma",
+          "pa",
+          "g"
+        ],
+        "token_ids": [
+          2611,
+          8957,
+          70
+        ],
+        "score": 10.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "map",
+          "ag"
+        ],
+        "token_ids": [
+          8899,
+          363
+        ],
+        "score": 9.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ma",
+          "p",
+          "ag"
+        ],
+        "token_ids": [
+          2611,
+          79,
+          363
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      }
+    ],
+    "mapang": [
+      {
+        "tokens": [
+          "ma",
+          "pa",
+          "ng"
+        ],
+        "token_ids": [
+          2611,
+          8957,
+          782
+        ],
+        "score": 11.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "map",
+          "ang"
+        ],
+        "token_ids": [
+          8899,
+          648
+        ],
+        "score": 9.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ma",
+          "pan",
+          "g"
+        ],
+        "token_ids": [
+          2611,
+          6839,
+          70
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      }
+    ],
+    "may": [
+      {
+        "tokens": [
+          "may"
+        ],
+        "token_ids": [
+          11261
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "na": [
+      {
+        "tokens": [
+          "na"
+        ],
+        "token_ids": [
+          2616
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "nag": [
+      {
+        "tokens": [
+          "na",
+          "g"
+        ],
+        "token_ids": [
+          2616,
+          70
+        ],
+        "score": 10.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "n",
+          "ag"
+        ],
+        "token_ids": [
+          77,
+          363
+        ],
+        "score": 8.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "n",
+          "a",
+          "g"
+        ],
+        "token_ids": [
+          77,
+          64,
+          70
+        ],
+        "score": 6.0,
+        "type": "optimal"
+      }
+    ],
+    "nagka": [
+      {
+        "tokens": [
+          "na",
+          "g",
+          "ka"
+        ],
+        "token_ids": [
+          2616,
+          70,
+          4914
+        ],
+        "score": 10.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "n",
+          "ag",
+          "ka"
+        ],
+        "token_ids": [
+          77,
+          363,
+          4914
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "n",
+          "a",
+          "g",
+          "ka"
+        ],
+        "token_ids": [
+          77,
+          64,
+          70,
+          4914
+        ],
+        "score": 5.5,
+        "type": "optimal"
+      }
+    ],
+    "nagkaka": [
+      {
+        "tokens": [
+          "na",
+          "g",
+          "ka",
+          "ka"
+        ],
+        "token_ids": [
+          2616,
+          70,
+          4914,
+          4914
+        ],
+        "score": 10.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "n",
+          "ag",
+          "ka",
+          "ka"
+        ],
+        "token_ids": [
+          77,
+          363,
+          4914,
+          4914
+        ],
+        "score": 8.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "n",
+          "a",
+          "g",
+          "ka",
+          "ka"
+        ],
+        "token_ids": [
+          77,
+          64,
+          70,
+          4914,
+          4914
+        ],
+        "score": 6.5,
+        "type": "optimal"
+      }
+    ],
+    "naka": [
+      {
+        "tokens": [
+          "na",
+          "ka"
+        ],
+        "token_ids": [
+          2616,
+          4914
+        ],
+        "score": 13.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "n",
+          "a",
+          "ka"
+        ],
+        "token_ids": [
+          77,
+          64,
+          4914
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "na",
+          "k",
+          "a"
+        ],
+        "token_ids": [
+          2616,
+          74,
+          64
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      }
+    ],
+    "nakaka": [
+      {
+        "tokens": [
+          "na",
+          "ka",
+          "ka"
+        ],
+        "token_ids": [
+          2616,
+          4914,
+          4914
+        ],
+        "score": 13.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "n",
+          "aka",
+          "ka"
+        ],
+        "token_ids": [
+          77,
+          8130,
+          4914
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "na",
+          "k",
+          "aka"
+        ],
+        "token_ids": [
+          2616,
+          74,
+          8130
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      }
+    ],
+    "naki": [
+      {
+        "tokens": [
+          "na",
+          "ki"
+        ],
+        "token_ids": [
+          2616,
+          4106
+        ],
+        "score": 11.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "na",
+          "k",
+          "i"
+        ],
+        "token_ids": [
+          2616,
+          74,
+          72
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "n",
+          "a",
+          "ki"
+        ],
+        "token_ids": [
+          77,
+          64,
+          4106
+        ],
+        "score": 7.5,
+        "type": "optimal"
+      }
+    ],
+    "nakiki": [
+      {
+        "tokens": [
+          "na",
+          "ki",
+          "ki"
+        ],
+        "token_ids": [
+          2616,
+          4106,
+          4106
+        ],
+        "score": 10.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "na",
+          "k",
+          "iki"
+        ],
+        "token_ids": [
+          2616,
+          74,
+          5580
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "n",
+          "aki",
+          "ki"
+        ],
+        "token_ids": [
+          77,
+          8182,
+          4106
+        ],
+        "score": 7.0,
+        "type": "optimal"
+      }
+    ],
+    "napaka": [
+      {
+        "tokens": [
+          "na",
+          "pa",
+          "ka"
+        ],
+        "token_ids": [
+          2616,
+          8957,
+          4914
+        ],
+        "score": 13.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "na",
+          "pak",
+          "a"
+        ],
+        "token_ids": [
+          2616,
+          41091,
+          64
+        ],
+        "score": 10.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "n",
+          "apa",
+          "ka"
+        ],
+        "token_ids": [
+          77,
+          32678,
+          4914
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      }
+    ],
+    "pa": [
+      {
+        "tokens": [
+          "pa"
+        ],
+        "token_ids": [
+          8957
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "pala": [
+      {
+        "tokens": [
+          "pa",
+          "la"
+        ],
+        "token_ids": [
+          8957,
+          5031
+        ],
+        "score": 11.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "pal",
+          "a"
+        ],
+        "token_ids": [
+          18596,
+          64
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "pa",
+          "l",
+          "a"
+        ],
+        "token_ids": [
+          8957,
+          75,
+          64
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      }
+    ],
+    "pag": [
+      {
+        "tokens": [
+          "pa",
+          "g"
+        ],
+        "token_ids": [
+          8957,
+          70
+        ],
+        "score": 10.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "p",
+          "ag"
+        ],
+        "token_ids": [
+          79,
+          363
+        ],
+        "score": 8.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "p",
+          "a",
+          "g"
+        ],
+        "token_ids": [
+          79,
+          64,
+          70
+        ],
+        "score": 6.0,
+        "type": "optimal"
+      }
+    ],
+    "pagka": [
+      {
+        "tokens": [
+          "pa",
+          "g",
+          "ka"
+        ],
+        "token_ids": [
+          8957,
+          70,
+          4914
+        ],
+        "score": 10.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "p",
+          "ag",
+          "ka"
+        ],
+        "token_ids": [
+          79,
+          363,
+          4914
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "p",
+          "a",
+          "g",
+          "ka"
+        ],
+        "token_ids": [
+          79,
+          64,
+          70,
+          4914
+        ],
+        "score": 5.5,
+        "type": "optimal"
+      }
+    ],
+    "pagkaka": [
+      {
+        "tokens": [
+          "pa",
+          "g",
+          "ka",
+          "ka"
+        ],
+        "token_ids": [
+          8957,
+          70,
+          4914,
+          4914
+        ],
+        "score": 10.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "p",
+          "ag",
+          "ka",
+          "ka"
+        ],
+        "token_ids": [
+          79,
+          363,
+          4914,
+          4914
+        ],
+        "score": 8.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "p",
+          "a",
+          "g",
+          "ka",
+          "ka"
+        ],
+        "token_ids": [
+          79,
+          64,
+          70,
+          4914,
+          4914
+        ],
+        "score": 6.5,
+        "type": "optimal"
+      }
+    ],
+    "paki": [
+      {
+        "tokens": [
+          "pa",
+          "ki"
+        ],
+        "token_ids": [
+          8957,
+          4106
+        ],
+        "score": 11.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "pak",
+          "i"
+        ],
+        "token_ids": [
+          41091,
+          72
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "pa",
+          "k",
+          "i"
+        ],
+        "token_ids": [
+          8957,
+          74,
+          72
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      }
+    ],
+    "pakiki": [
+      {
+        "tokens": [
+          "pa",
+          "ki",
+          "ki"
+        ],
+        "token_ids": [
+          8957,
+          4106,
+          4106
+        ],
+        "score": 10.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "pak",
+          "iki"
+        ],
+        "token_ids": [
+          41091,
+          5580
+        ],
+        "score": 9.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "pak",
+          "i",
+          "ki"
+        ],
+        "token_ids": [
+          41091,
+          72,
+          4106
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      }
+    ],
+    "pakikipag": [
+      {
+        "tokens": [
+          "pa",
+          "ki",
+          "ki",
+          "pa",
+          "g"
+        ],
+        "token_ids": [
+          8957,
+          4106,
+          4106,
+          8957,
+          70
+        ],
+        "score": 8.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "pak",
+          "iki",
+          "pa",
+          "g"
+        ],
+        "token_ids": [
+          41091,
+          5580,
+          8957,
+          70
+        ],
+        "score": 6.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "pak",
+          "i",
+          "ki",
+          "pa",
+          "g"
+        ],
+        "token_ids": [
+          41091,
+          72,
+          4106,
+          8957,
+          70
+        ],
+        "score": 6.5,
+        "type": "optimal"
+      }
+    ],
+    "pam": [
+      {
+        "tokens": [
+          "pa",
+          "m"
+        ],
+        "token_ids": [
+          8957,
+          76
+        ],
+        "score": 10.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "p",
+          "am"
+        ],
+        "token_ids": [
+          79,
+          321
+        ],
+        "score": 8.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "p",
+          "a",
+          "m"
+        ],
+        "token_ids": [
+          79,
+          64,
+          76
+        ],
+        "score": 6.0,
+        "type": "optimal"
+      }
+    ],
+    "panag": [
+      {
+        "tokens": [
+          "pa",
+          "na",
+          "g"
+        ],
+        "token_ids": [
+          8957,
+          2616,
+          70
+        ],
+        "score": 10.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "pan",
+          "ag"
+        ],
+        "token_ids": [
+          6839,
+          363
+        ],
+        "score": 9.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "pa",
+          "n",
+          "ag"
+        ],
+        "token_ids": [
+          8957,
+          77,
+          363
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      }
+    ],
+    "pang": [
+      {
+        "tokens": [
+          "pa",
+          "ng"
+        ],
+        "token_ids": [
+          8957,
+          782
+        ],
+        "score": 11.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "pan",
+          "g"
+        ],
+        "token_ids": [
+          6839,
+          70
+        ],
+        "score": 7.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "pa",
+          "n",
+          "g"
+        ],
+        "token_ids": [
+          8957,
+          77,
+          70
+        ],
+        "score": 7.5,
+        "type": "optimal"
+      }
+    ],
+    "pinaka": [
+      {
+        "tokens": [
+          "pi",
+          "na",
+          "ka"
+        ],
+        "token_ids": [
+          14415,
+          2616,
+          4914
+        ],
+        "score": 12.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "pin",
+          "a",
+          "ka"
+        ],
+        "token_ids": [
+          11635,
+          64,
+          4914
+        ],
+        "score": 10.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "pin",
+          "aka"
+        ],
+        "token_ids": [
+          11635,
+          8130
+        ],
+        "score": 9.5,
+        "type": "optimal"
+      }
+    ],
+    "pinag": [
+      {
+        "tokens": [
+          "pin",
+          "ag"
+        ],
+        "token_ids": [
+          11635,
+          363
+        ],
+        "score": 9.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "pi",
+          "na",
+          "g"
+        ],
+        "token_ids": [
+          14415,
+          2616,
+          70
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "p",
+          "in",
+          "ag"
+        ],
+        "token_ids": [
+          79,
+          259,
+          363
+        ],
+        "score": 8.0,
+        "type": "optimal"
+      }
+    ],
+    "sa": [
+      {
+        "tokens": [
+          "sa"
+        ],
+        "token_ids": [
+          11400
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "san": [
+      {
+        "tokens": [
+          "san"
+        ],
+        "token_ids": [
+          12807
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "sang": [
+      {
+        "tokens": [
+          "sa",
+          "ng"
+        ],
+        "token_ids": [
+          11400,
+          782
+        ],
+        "score": 9.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "san",
+          "g"
+        ],
+        "token_ids": [
+          12807,
+          70
+        ],
+        "score": 7.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "s",
+          "ang"
+        ],
+        "token_ids": [
+          82,
+          648
+        ],
+        "score": 7.0,
+        "type": "optimal"
+      }
+    ],
+    "sam": [
+      {
+        "tokens": [
+          "sam"
+        ],
+        "token_ids": [
+          37687
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "sing": [
+      {
+        "tokens": [
+          "sing"
+        ],
+        "token_ids": [
+          12215
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "tag": [
+      {
+        "tokens": [
+          "tag"
+        ],
+        "token_ids": [
+          12985
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "tig": [
+      {
+        "tokens": [
+          "ti",
+          "g"
+        ],
+        "token_ids": [
+          20259,
+          70
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "t",
+          "ig"
+        ],
+        "token_ids": [
+          83,
+          328
+        ],
+        "score": 8.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "t",
+          "i",
+          "g"
+        ],
+        "token_ids": [
+          83,
+          72,
+          70
+        ],
+        "score": 6.0,
+        "type": "optimal"
+      }
+    ],
+    "taga": [
+      {
+        "tokens": [
+          "ta",
+          "ga"
+        ],
+        "token_ids": [
+          8326,
+          4908
+        ],
+        "score": 10.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "tag",
+          "a"
+        ],
+        "token_ids": [
+          12985,
+          64
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "t",
+          "a",
+          "ga"
+        ],
+        "token_ids": [
+          83,
+          64,
+          4908
+        ],
+        "score": 7.5,
+        "type": "optimal"
+      }
+    ],
+    "tagapag": [
+      {
+        "tokens": [
+          "ta",
+          "gap",
+          "ag"
+        ],
+        "token_ids": [
+          8326,
+          43554,
+          363
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "tag",
+          "ap",
+          "ag"
+        ],
+        "token_ids": [
+          12985,
+          499,
+          363
+        ],
+        "score": 8.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "tag",
+          "apa",
+          "g"
+        ],
+        "token_ids": [
+          12985,
+          32678,
+          70
+        ],
+        "score": 7.0,
+        "type": "optimal"
+      }
+    ],
+    "um": [
+      {
+        "tokens": [
+          "um"
+        ],
+        "token_ids": [
+          388
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "ado": [
+      {
+        "tokens": [
+          "ado"
+        ],
+        "token_ids": [
+          4533
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "an": [
+      {
+        "tokens": [
+          "an"
+        ],
+        "token_ids": [
+          272
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "ana": [
+      {
+        "tokens": [
+          "ana"
+        ],
+        "token_ids": [
+          2271
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "ano": [
+      {
+        "tokens": [
+          "ano"
+        ],
+        "token_ids": [
+          5733
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "asyon": [
+      {
+        "tokens": [
+          "as",
+          "yon"
+        ],
+        "token_ids": [
+          292,
+          19181
+        ],
+        "score": 9.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "asy",
+          "on"
+        ],
+        "token_ids": [
+          4107,
+          261
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "a",
+          "sy",
+          "on"
+        ],
+        "token_ids": [
+          64,
+          1837,
+          261
+        ],
+        "score": 8.0,
+        "type": "optimal"
+      }
+    ],
+    "era": [
+      {
+        "tokens": [
+          "era"
+        ],
+        "token_ids": [
+          8607
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "eriya": [
+      {
+        "tokens": [
+          "eri",
+          "ya"
+        ],
+        "token_ids": [
+          33442,
+          3972
+        ],
+        "score": 9.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "er",
+          "iya"
+        ],
+        "token_ids": [
+          263,
+          21008
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "e",
+          "ri",
+          "ya"
+        ],
+        "token_ids": [
+          68,
+          380,
+          3972
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      }
+    ],
+    "erya": [
+      {
+        "tokens": [
+          "er",
+          "ya"
+        ],
+        "token_ids": [
+          263,
+          3972
+        ],
+        "score": 9.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ery",
+          "a"
+        ],
+        "token_ids": [
+          1924,
+          64
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "e",
+          "ry",
+          "a"
+        ],
+        "token_ids": [
+          68,
+          563,
+          64
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      }
+    ],
+    "ero": [
+      {
+        "tokens": [
+          "ero"
+        ],
+        "token_ids": [
+          3529
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "han": [
+      {
+        "tokens": [
+          "han"
+        ],
+        "token_ids": [
+          7637
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "ay": [
+      {
+        "tokens": [
+          "ay"
+        ],
+        "token_ids": [
+          323
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "ilyo": [
+      {
+        "tokens": [
+          "il",
+          "yo"
+        ],
+        "token_ids": [
+          346,
+          8226
+        ],
+        "score": 9.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "ily",
+          "o"
+        ],
+        "token_ids": [
+          813,
+          78
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "i",
+          "ly",
+          "o"
+        ],
+        "token_ids": [
+          72,
+          306,
+          78
+        ],
+        "score": 8.5,
+        "type": "optimal"
+      }
+    ],
+    "ing": [
+      {
+        "tokens": [
+          "ing"
+        ],
+        "token_ids": [
+          278
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "ismo": [
+      {
+        "tokens": [
+          "ismo"
+        ],
+        "token_ids": [
+          44126
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "ista": [
+      {
+        "tokens": [
+          "ista"
+        ],
+        "token_ids": [
+          12523
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "ita": [
+      {
+        "tokens": [
+          "ita"
+        ],
+        "token_ids": [
+          5350
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "ito": [
+      {
+        "tokens": [
+          "ito"
+        ],
+        "token_ids": [
+          10094
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "oy": [
+      {
+        "tokens": [
+          "oy"
+        ],
+        "token_ids": [
+          726
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "nan": [
+      {
+        "tokens": [
+          "nan"
+        ],
+        "token_ids": [
+          12647
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "nin": [
+      {
+        "tokens": [
+          "nin"
+        ],
+        "token_ids": [
+          35073
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "ng": [
+      {
+        "tokens": [
+          "ng"
+        ],
+        "token_ids": [
+          782
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "rin": [
+      {
+        "tokens": [
+          "rin"
+        ],
+        "token_ids": [
+          12769
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "s": [
+      {
+        "tokens": [
+          "s"
+        ],
+        "token_ids": [
+          82
+        ],
+        "score": 10.0,
+        "type": "exact_match"
+      }
+    ],
+    "siyon": [
+      {
+        "tokens": [
+          "si",
+          "yon"
+        ],
+        "token_ids": [
+          13396,
+          19181
+        ],
+        "score": 10.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "s",
+          "i",
+          "yon"
+        ],
+        "token_ids": [
+          82,
+          72,
+          19181
+        ],
+        "score": 7.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "si",
+          "yo",
+          "n"
+        ],
+        "token_ids": [
+          13396,
+          8226,
+          77
+        ],
+        "score": 7.5,
+        "type": "optimal"
+      }
+    ],
+    "syon": [
+      {
+        "tokens": [
+          "sy",
+          "on"
+        ],
+        "token_ids": [
+          1837,
+          261
+        ],
+        "score": 9.0,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "s",
+          "yon"
+        ],
+        "token_ids": [
+          82,
+          19181
+        ],
+        "score": 7.5,
+        "type": "optimal"
+      },
+      {
+        "tokens": [
+          "sy",
+          "o",
+          "n"
+        ],
+        "token_ids": [
+          1837,
+          78,
+          77
+        ],
+        "score": 7.0,
+        "type": "optimal"
+      }
+    ]
+  },
+  "cannot_decompose": []
+}

@@ -22,16 +22,43 @@ from dataclasses import dataclass, field
 import pandas as pd
 
 from .string_operations import (
-    delete_character,
-    insert_character,
-    substitute_character,
-    permute_characters,
     spell_string,
     chars_to_string,
     string_to_chars,
 )
-from .syllabification_operations import syllabify, classify_stress
+from .syllabification_operations import syllabify
 from .utils import prepare_mcq_outputs, prepare_gen_outputs
+
+
+# Simple position-specific operations for hierarchical tasks
+def delete_character(word: str, position: int) -> str:
+    """Delete character at position (1-indexed)."""
+    if position < 1 or position > len(word):
+        return word
+    return word[:position-1] + word[position:]
+
+
+def insert_character(word: str, position: int, char: str) -> str:
+    """Insert character at position (1-indexed)."""
+    if position < 1 or position > len(word) + 1:
+        return word
+    return word[:position-1] + char + word[position-1:]
+
+
+def substitute_character(word: str, position: int, new_char: str) -> str:
+    """Substitute character at position (1-indexed)."""
+    if position < 1 or position > len(word):
+        return word
+    return word[:position-1] + new_char + word[position:]
+
+
+def permute_characters(word: str, pos1: int, pos2: int) -> str:
+    """Swap characters at two positions (1-indexed)."""
+    if pos1 < 1 or pos1 > len(word) or pos2 < 1 or pos2 > len(word):
+        return word
+    chars = list(word)
+    chars[pos1-1], chars[pos2-1] = chars[pos2-1], chars[pos1-1]
+    return ''.join(chars)
 
 
 @dataclass

@@ -427,7 +427,7 @@ class AffixDecomposer:
         return "\n".join(report)
 
 
-def compare_tokenizers(tokenizer_names: List[str], affixes_file: str) -> pd.DataFrame:
+def compare_tokenizers(tokenizer_names: List[str], affixes_file: str):
     """
     Compare affix coverage across multiple tokenizers.
 
