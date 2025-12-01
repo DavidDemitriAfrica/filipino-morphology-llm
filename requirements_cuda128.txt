@@ -1,14 +1,14 @@
 # ============================================================================
 # PyTorch with CUDA Support
 # ============================================================================
-# NOTE: PyTorch should be installed FIRST via setup_env.sh script
-# Do NOT install torch directly from this requirements.txt file
-# The setup script ensures correct CUDA 12.1 version is installed
+# NOTE: PyTorch should be installed FIRST via setup_env_cuda128.sh script
+# Do NOT install torch directly from this requirements file
+# The setup script ensures the correct CUDA 12.8 build is installed
 
 # ============================================================================
 # Core Scientific Computing
 # ============================================================================
-numpy>=1.24.0,<2.1.0  # NeMo requires numpy<2.1
+numpy>=1.24.0,<2.1.0
 pandas>=2.0.0
 scipy>=1.11.0
 
@@ -19,11 +19,11 @@ pytorch-lightning>=2.0.0
 hydra-core>=1.3.0
 
 # ============================================================================
-# NVIDIA NeMo and Dependencies
+# Megatron-Bridge and CUDA Extensions
 # ============================================================================
 nvidia-ml-py>=13.580.65
-# Note: nvidia-modelopt will be installed as a dependency of nemo-toolkit
-nemo-toolkit[all]>=2.2.0
+megatron-bridge==0.2.0rc6
+# transformer_engine[pytorch] is installed explicitly in setup_env_cuda128.sh
 
 # ============================================================================
 # NLP and Tokenization
