@@ -196,10 +196,11 @@ This repository merges two existing repositories:
 - Components: Tokenization, models, training, data processing
 - Paper: Sims et al. (2025). "Stochastic Tokenization Improves Subword Understanding"
 
-**PACUTE** (CC0 1.0 Universal)
-- Source: Philippine Annotated Corpus for Understanding Tagalog Entities
+**PACUTE**: Philippine Annotated Corpus for Understanding Tagalog Entities
+- Source: This repository (original work)
 - Components: Evaluation tasks, morphological operations, benchmarks
 - Data: 1,040 evaluation items, 16,828 syllabified words
+- License: CC0 1.0 Universal
 
 See [ORIGINAL_SOURCES.md](ORIGINAL_SOURCES.md) for detailed attribution.
 
@@ -231,18 +232,27 @@ If you use this repository, please cite:
 
 **StochasTok**:
 ```bibtex
-@article{sims2025stochastok,
-  title={Stochastic Tokenization Improves Subword Understanding},
-  author={Sims, Anya and others},
-  year={2025}
+@misc{sims2025stochastokimprovingfinegrainedsubword,
+  title={StochasTok: Improving Fine-Grained Subword Understanding in LLMs},
+  author={Anya Sims and Thom Foster and Klara Kaleb and Tuan-Duy H. Nguyen and
+          Joseph Lee and Jakob N. Foerster and Yee Whye Teh and Cong Lu},
+  year={2025},
+  eprint={2506.01687},
+  archivePrefix={arXiv},
+  primaryClass={cs.CL},
+  url={https://arxiv.org/abs/2506.01687}
 }
 ```
 
-**PACUTE**:
+**PACUTE** (same as main citation):
 ```bibtex
-@misc{pacute2024,
-  title={Philippine Annotated Corpus for Understanding Tagalog Entities},
-  year={2024}
+@misc{africa2025filipino,
+  title={Filipino Morphology-Aware Language Model},
+  author={Africa, David Demitri and Montalan, Jann Railey and Gamboa, Lance and
+          Flores, Richell Isaiah and Layacan, Jimson Paulo and
+          Susanto, Yosephine and Ngui, Jian Gang},
+  year={2025},
+  note={Author order to be determined}
 }
 ```
 
