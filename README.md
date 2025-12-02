@@ -70,18 +70,23 @@ GPT-2:     mat | ul | og
 
 **Finding**: ~55% of Filipino affixes require decomposition into sub-tokens.
 
-### Oracle Analysis
+### Tokenization Comparison
 
-We tested an oracle tokenizer that splits at known morpheme boundaries before applying BPE:
+We compared three approaches on 100 morpheme-annotated Filipino words:
 
-| Metric | GPT-2 | Oracle | Δ |
-|--------|-------|--------|---|
-| MorphScore | 0.235 | 0.990 | +0.755 |
-| Boundary F1 | 0.165 | 0.643 | +0.478 |
+| Metric | GPT-2 Baseline | Real Patok | Oracle | Patok Improvement |
+|--------|----------------|------------|--------|-------------------|
+| MorphScore | 0.235 | 0.657 | 0.990 | +0.422 (+179%) |
+| Boundary F1 | 0.165 | 0.365 | 0.643 | +0.199 (+121%) |
+| Fragmentation | 1.574 | 1.906 | 1.658 | +0.332 |
 
-**Finding**: Respecting morpheme boundaries could improve alignment by 320%, establishing an upper bound for what morphologically-aware tokenization might achieve.
+**Findings**:
+- Real Patok substantially improves morpheme boundary alignment (+179% MorphScore)
+- Captures 56% of oracle's theoretical maximum improvement
+- Higher fragmentation expected (splitting at morpheme boundaries)
+- Oracle represents upper bound with known boundaries
 
-**Note**: This is an oracle experiment (we provided the boundaries). Real Patok would need to learn these during training.
+**Note**: Oracle uses ground-truth morpheme boundaries. Real Patok uses 92 Filipino affixes + reduplication detection.
 
 ## Repository Structure
 
@@ -95,10 +100,11 @@ filipino-morphology-llm/
 │   ├── training/              # Training infrastructure
 │   └── data_processing/       # Dataset preprocessing
 ├── data/
-│   ├── affixes/               # Filipino affix list
+│   ├── affixes/               # Filipino affix list (92 affixes)
 │   ├── benchmarks/            # 2,236 evaluation items
 │   ├── corpora/               # Annotations, syllables, frequencies
 │   └── vocabularies/          # Tokenizer analyses
+├── results/                   # Tokenization comparison metrics
 ├── experiments/               # Training and evaluation scripts
 ├── scripts/                   # Analysis utilities
 └── configs/                   # Training configurations
@@ -178,7 +184,7 @@ python scripts/compare_tokenizers.py
 
 ### Analysis
 - `results/tokenization_baseline.json` - GPT-2 baseline metrics
-- `results/tokenization_comparison.json` - Oracle vs baseline
+- `results/tokenization_comparison.json` - GPT-2 vs Oracle vs Real Patok
 - `data/vocabularies/affix_analysis_*.json` - Coverage analyses
 
 ## Attribution
@@ -204,11 +210,24 @@ See [ORIGINAL_SOURCES.md](ORIGINAL_SOURCES.md) for detailed attribution.
 - 1,196 hierarchical diagnostic tasks (6 levels)
 - Baseline BPE analysis (MorphScore = 0.235)
 - Affix coverage analysis (44.6% vocabulary coverage)
-- Oracle upper bound analysis (MorphScore = 0.990)
+- Morphology-aware tokenization comparison (Patok: +179% MorphScore)
 
 ## Citation
 
 If you use this repository, please cite:
+
+```bibtex
+@misc{africa2025filipino,
+  title={Filipino Morphology-Aware Language Model},
+  author={Africa, David Demitri and Montalan, Jann Railey and Gamboa, Lance and
+          Flores, Richell Isaiah and Layacan, Jimson Paulo and
+          Susanto, Yosephine and Ngui, Jian Gang},
+  year={2025},
+  note={Author order to be determined}
+}
+```
+
+**Original Sources**:
 
 **StochasTok**:
 ```bibtex
