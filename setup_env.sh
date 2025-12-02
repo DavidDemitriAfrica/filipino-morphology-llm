@@ -1,15 +1,19 @@
 #!/bin/bash
-# Setup script for NeMo environment using uv
+# Setup script for local development environment (data preprocessing only)
 # Usage: bash setup_env.sh
+#
+# NOTE: This environment is for data preprocessing and analysis ONLY.
+# For training, use the NeMo Framework Container (see setup_container.sh)
 
 set -e  # Exit on error
 
-# Suppress PyTorch pynvml deprecation warning
-export PYTHONWARNINGS="ignore::FutureWarning:torch.cuda"
-
 echo "=============================================="
-echo "Setting up NeMo environment with uv"
+echo "Setting up Local Development Environment"
 echo "=============================================="
+echo ""
+echo "NOTE: This is for data preprocessing/analysis only."
+echo "      For training, use: bash setup_container.sh"
+echo ""
 
 # Check if uv is installed
 if ! command -v uv &> /dev/null; then
@@ -36,40 +40,14 @@ source env/bin/activate
 echo "Python: $(which python)"
 echo "Python version: $(python --version)"
 
-# Install dependencies in correct order
+# Install dependencies
 echo ""
 echo "=============================================="
-echo "Installing dependencies..."
+echo "Installing dependencies from requirements.txt"
 echo "=============================================="
-
-# Step 1: Install PyTorch with CUDA support FIRST
-# This MUST be done before other packages to ensure correct CUDA version
 echo ""
-echo "Step 1/3: Installing PyTorch with CUDA 12.1 (cu121)..."
-uv pip install --index-url https://download.pytorch.org/whl/cu121 torch
-# uv pip install transformer-engine[pytorch] \
-#     --extra-index-url https://pypi.nvidia.com \
-#     --find-links https://github.com/NVIDIA/TransformerEngine/releases
-
-# Verify PyTorch installation
-echo ""
-echo "Verifying PyTorch installation..."
-python -c "import torch; print(f'PyTorch version: {torch.__version__}'); print(f'CUDA available: {torch.cuda.is_available()}'); print(f'CUDA version: {torch.version.cuda if torch.cuda.is_available() else \"N/A\"}')"
-
-# Step 2: Create constraints file to lock torch version
-echo ""
-echo "Step 2/3: Creating constraints file to prevent torch from being overwritten..."
-TORCH_VERSION=$(python -c "import torch; print(torch.__version__)")
-echo "torch==$TORCH_VERSION" > /tmp/torch_constraints.txt
-echo "Torch version locked: $TORCH_VERSION"
-
-# Step 3: Install all other dependencies from requirements.txt
-# Now that PyTorch is installed with correct CUDA support, install everything else
-# Use --constraint to prevent torch from being reinstalled
-echo ""
-echo "Step 3/3: Installing all other dependencies from requirements.txt..."
-echo "Note: Using constraint file to preserve PyTorch CUDA 12.1 version"
-uv pip install --constraint /tmp/torch_constraints.txt -r requirements.txt
+echo "Installing packages for data preprocessing and analysis..."
+uv pip install -r requirements.txt
 
 echo ""
 echo "=============================================="
@@ -78,17 +56,14 @@ echo "=============================================="
 
 # Verify key imports
 python -c "
-import torch
-import nemo
-import modelopt
-print('✓ PyTorch:', torch.__version__)
-print('✓ CUDA available:', torch.cuda.is_available())
-print('✓ NeMo version:', nemo.__version__)
-print('✓ nvidia-modelopt installed')
-print()
-print('Testing NeMo imports...')
-from nemo.collections.llm.recipes import gemma3_1b
-print('✓ NeMo LLM recipes imported successfully')
+import pandas
+import numpy
+import transformers
+import wandb
+print('✓ pandas:', pandas.__version__)
+print('✓ numpy:', numpy.__version__)
+print('✓ transformers:', transformers.__version__)
+print('✓ wandb:', wandb.__version__)
 print()
 print('All checks passed!')
 "
@@ -101,6 +76,9 @@ echo ""
 echo "To activate the environment:"
 echo "  source env/bin/activate"
 echo ""
-echo "To run training:"
-echo "  python scripts/run_cpt_gemma3_1b.py --help"
+echo "For data preprocessing:"
+echo "  python src/data_preprocessing/prepare_seapile.py"
+echo ""
+echo "For training, use the NeMo container:"
+echo "  bash setup_container.sh"
 echo ""
