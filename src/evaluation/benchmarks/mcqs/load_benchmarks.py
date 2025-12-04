@@ -1,16 +1,16 @@
 """
-Load a bechmark loader, given the benchmark name.
+Load a benchmark loader, given the benchmark name.
 """
 from functools import partial
 
-from evals.mcqs.benchmarks.arc import load_arc
-from evals.mcqs.benchmarks.blimp import load_blimp
-from evals.mcqs.benchmarks.hellaswag import load_hellaswag
-from evals.mcqs.benchmarks.mmlu import load_mmlu
-from evals.mcqs.benchmarks.winogrande import load_winogrande
-from evals.mcqs.benchmarks.langgame import load_langgame
-from evals.mcqs.benchmarks.cute import load_cute
-from evals.mcqs.benchmarks.pacute import load_pacute
+from evaluation.benchmarks.mcqs.benchmarks.arc import load_arc
+from evaluation.benchmarks.mcqs.benchmarks.blimp import load_blimp
+from evaluation.benchmarks.mcqs.benchmarks.hellaswag import load_hellaswag
+from evaluation.benchmarks.mcqs.benchmarks.mmlu import load_mmlu
+from evaluation.benchmarks.mcqs.benchmarks.winogrande import load_winogrande
+from evaluation.benchmarks.mcqs.benchmarks.langgame import load_langgame
+from evaluation.benchmarks.mcqs.benchmarks.cute import load_cute
+from evaluation.benchmarks.mcqs.benchmarks.pacute import load_pacute
 
 EVALS_DICT = {
     "arc": partial(load_arc, split="test"),
