@@ -59,10 +59,24 @@ fi
 # ============================================================================
 
 export CHUNK_NUM=1
-export CHUNK_FILE_HOST="${JOB_WORK_DIR}/data/chunks/chunk_$(printf '%04d' ${CHUNK_NUM}).jsonl"
-export CHUNK_FILE_CONTAINER="/workspace/data/chunks/chunk_$(printf '%04d' ${CHUNK_NUM}).jsonl"
-export OUTPUT_PREFIX_CONTAINER="/workspace/data/processed/chunk_$(printf '%04d' ${CHUNK_NUM})"
 export TOKENIZER="google/gemma-3-1b-pt"
+export TOKENIZER_NAME=$(echo ${TOKENIZER} | sed 's/\//-/g')  # Convert slashes to dashes for directory names
+
+# Tokenization mode configuration
+export TOKENIZATION_MODE="${TOKENIZATION_MODE:-vanilla}"
+export EXPAND_PROP="${EXPAND_PROP:-0.1}"
+export SEED="${SEED:-42}"
+
+# Output directory depends on tokenization mode
+if [ "${TOKENIZATION_MODE}" = "stochastok" ]; then
+    export OUTPUT_SUBDIR="${TOKENIZER_NAME}_stochastok_${EXPAND_PROP}"
+else
+    export OUTPUT_SUBDIR="${TOKENIZER_NAME}"
+fi
+
+export CHUNK_FILE_HOST="${JOB_WORK_DIR}/data/chunks/${TOKENIZER_NAME}/chunk_$(printf '%04d' ${CHUNK_NUM}).jsonl"
+export CHUNK_FILE_CONTAINER="/workspace/data/chunks/${TOKENIZER_NAME}/chunk_$(printf '%04d' ${CHUNK_NUM}).jsonl"
+export OUTPUT_PREFIX_CONTAINER="/workspace/data/processed/${OUTPUT_SUBDIR}/chunk_$(printf '%04d' ${CHUNK_NUM})"
 export WORKERS=32
 export JSON_KEY="text"
 
@@ -83,6 +97,11 @@ echo "Input (container): ${CHUNK_FILE_CONTAINER}"
 echo "Output: ${OUTPUT_PREFIX_CONTAINER}.{bin,idx}"
 echo "Tokenizer: ${TOKENIZER}"
 echo "Workers: ${WORKERS}"
+echo "Tokenization Mode: ${TOKENIZATION_MODE}"
+if [ "${TOKENIZATION_MODE}" = "stochastok" ]; then
+    echo "Expand Proportion: ${EXPAND_PROP}"
+    echo "Random Seed: ${SEED}"
+fi
 echo "============================================================================"
 echo ""
 
@@ -94,7 +113,7 @@ if [ ! -f "${CHUNK_FILE_HOST}" ]; then
     echo "✗ Error: Chunk file not found: ${CHUNK_FILE_HOST}"
     echo ""
     echo "Available chunks:"
-    ls -lh "${JOB_WORK_DIR}/data/chunks/" || echo "Directory doesn't exist!"
+    ls -lh "${JOB_WORK_DIR}/data/chunks/${TOKENIZER_NAME}/" || echo "Directory doesn't exist!"
     exit 1
 fi
 
@@ -117,7 +136,10 @@ if [ -n "${BIND_MOUNTS:-}" ]; then
 fi
 
 ENROOT_ENV="-e HF_HOME=${HF_HOME} \
-    -e HF_TOKEN=${HF_TOKEN}"
+    -e HF_TOKEN=${HF_TOKEN} \
+    -e TOKENIZATION_MODE=${TOKENIZATION_MODE} \
+    -e EXPAND_PROP=${EXPAND_PROP} \
+    -e SEED=${SEED}"
 
 # ============================================================================
 # Run Preprocessing
@@ -131,7 +153,13 @@ PYTHON_CMD="python /workspace/training/nemo/data/preprocess_data.py \
     --output-prefix ${OUTPUT_PREFIX_CONTAINER} \
     --tokenizer-model ${TOKENIZER} \
     --workers ${WORKERS} \
-    --text-key ${JSON_KEY}"
+    --text-key ${JSON_KEY} \
+    --tokenization-mode ${TOKENIZATION_MODE}"
+
+# Add stochastok-specific parameters if in stochastok mode
+if [ "${TOKENIZATION_MODE}" = "stochastok" ]; then
+    PYTHON_CMD="${PYTHON_CMD} --expand-prop ${EXPAND_PROP} --seed ${SEED}"
+fi
 
 echo "Command: ${PYTHON_CMD}"
 echo ""
@@ -151,7 +179,7 @@ if [ $EXIT_CODE -eq 0 ]; then
     echo "============================================================================"
     
     # Show output files (on host filesystem)
-    HOST_OUTPUT_DIR="${JOB_WORK_DIR}/data/processed"
+    HOST_OUTPUT_DIR="${JOB_WORK_DIR}/data/processed/${TOKENIZER_NAME}"
     if ls ${HOST_OUTPUT_DIR}/chunk_$(printf '%04d' ${CHUNK_NUM})_text_document.* 1> /dev/null 2>&1; then
         echo "Output files:"
         ls -lh ${HOST_OUTPUT_DIR}/chunk_$(printf '%04d' ${CHUNK_NUM})_text_document.*

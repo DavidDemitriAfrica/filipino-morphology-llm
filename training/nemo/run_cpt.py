@@ -59,8 +59,9 @@ def parse_args():
     parser.add_argument(
         "--data-path",
         type=str,
-        default="/workspace/data/processed/seapile-v2",
-        help="Path prefix for preprocessed Megatron binary files (without _text_document suffix)",
+        nargs="+",
+        default=["/workspace/data/processed/seapile-v2"],
+        help="Path prefix(es) for preprocessed Megatron binary files (without _text_document suffix). Can specify multiple paths for parallel chunks.",
     )
     parser.add_argument(
         "--seq-length",
@@ -205,34 +206,48 @@ def main():
     # Verify preprocessed data exists (Megatron binary format)
     # The data path should be a prefix like "data/processed/seapile-v2"
     # which will have corresponding files: seapile-v2_text_document.bin and .idx
-    data_prefix = args.data_path
-    bin_path = Path(f"{data_prefix}_text_document.bin")
-    idx_path = Path(f"{data_prefix}_text_document.idx")
+    # Support multiple paths for parallel preprocessing chunks
+    data_prefixes = args.data_path if isinstance(args.data_path, list) else [args.data_path]
     
-    if not bin_path.exists() or not idx_path.exists():
-        print(f"✗ Error: Preprocessed Megatron binary files not found")
-        print(f"  Expected: {bin_path}")
-        print(f"  Expected: {idx_path}")
-        print()
-        print("Please preprocess your data first:")
-        print("  python scripts/preprocess_data.py \\")
-        print(f"    --input data/corpora/seapile-v2.jsonl \\")
-        print(f"    --output-prefix {data_prefix} \\")
-        print(f"    --tokenizer-model {args.model}")
-        sys.exit(1)
+    print(f"✓ Verifying {len(data_prefixes)} data path(s)...")
+    total_size_gb = 0
+    verified_paths = []
     
-    print(f"✓ Preprocessed data found:")
-    print(f"  Binary: {bin_path} ({bin_path.stat().st_size / 1e9:.2f} GB)")
-    print(f"  Index:  {idx_path} ({idx_path.stat().st_size / 1e6:.2f} MB)")
+    for data_prefix in data_prefixes:
+        bin_path = Path(f"{data_prefix}_text_document.bin")
+        idx_path = Path(f"{data_prefix}_text_document.idx")
+        
+        if not bin_path.exists() or not idx_path.exists():
+            print(f"✗ Error: Preprocessed Megatron binary files not found for {data_prefix}")
+            print(f"  Expected: {bin_path}")
+            print(f"  Expected: {idx_path}")
+            print()
+            print("Please preprocess your data first:")
+            print("  # Single file:")
+            print("  python scripts/preprocess_data.py \\")
+            print(f"    --input data/corpora/seapile-v2.jsonl \\")
+            print(f"    --output-prefix {data_prefix} \\")
+            print(f"    --tokenizer-model google/gemma-3-1b-pt")
+            print()
+            print("  # Or parallel chunks:")
+            print("  qsub -J 1-N jobs/preprocess_data_parallel.pbs")
+            sys.exit(1)
+        
+        size_gb = bin_path.stat().st_size / 1e9
+        total_size_gb += size_gb
+        verified_paths.append(data_prefix)
+        print(f"  ✓ {data_prefix}: {size_gb:.2f} GB")
+    
+    print(f"✓ Total data size: {total_size_gb:.2f} GB across {len(verified_paths)} file(s)")
     
     # Set up WandB logger
     print("Setting up WandB logger...")
     wandb_logger = setup_wandb(args)
     
     # Configure the data module
-    print(f"Configuring data module...")
+    print(f"Configuring data module with {len(verified_paths)} data path(s)...")
     data = PreTrainingDataModule(
-        paths=[data_prefix],  # Use the preprocessed data prefix (without _text_document)
+        paths=verified_paths,  # Use the preprocessed data prefix(es) (without _text_document)
         seq_length=args.seq_length,
         global_batch_size=args.global_batch_size,
         micro_batch_size=args.micro_batch_size,

@@ -71,15 +71,28 @@ fi
 # Configuration
 # ============================================================================
 
-# Chunk directory (on host and in container)
-export HOST_CHUNK_DIR="${JOB_WORK_DIR}/data/chunks"
-export CONTAINER_CHUNK_DIR="/workspace/data/chunks"
-export CONTAINER_OUTPUT_DIR="/workspace/data/processed"
+# Tokenizer configuration
+export TOKENIZER="${TOKENIZER:-google/gemma-3-1b-pt}"
+export TOKENIZER_NAME=$(echo ${TOKENIZER} | sed 's/\//-/g')  # Convert slashes to dashes for directory names
+
+# Tokenization mode configuration
+export TOKENIZATION_MODE="${TOKENIZATION_MODE:-vanilla}"
+export EXPAND_PROP="${EXPAND_PROP:-0.1}"
+export SEED="${SEED:-42}"
+
+# Chunk directory (on host and in container) - organized by tokenizer and mode
+if [ "${TOKENIZATION_MODE}" = "stochastok" ]; then
+    export OUTPUT_SUBDIR="${TOKENIZER_NAME}_stochastok_${EXPAND_PROP}"
+else
+    export OUTPUT_SUBDIR="${TOKENIZER_NAME}"
+fi
+
+export HOST_CHUNK_DIR="${JOB_WORK_DIR}/data/chunks/${TOKENIZER_NAME}"
+export CONTAINER_CHUNK_DIR="/workspace/data/chunks/${TOKENIZER_NAME}"
+export CONTAINER_OUTPUT_DIR="/workspace/data/processed/${OUTPUT_SUBDIR}"
 export CHUNK_FILE_HOST=$(printf "${HOST_CHUNK_DIR}/chunk_%04d.jsonl" ${ARRAY_INDEX})
 export CHUNK_FILE_CONTAINER=$(printf "${CONTAINER_CHUNK_DIR}/chunk_%04d.jsonl" ${ARRAY_INDEX})
 export OUTPUT_PREFIX_CONTAINER=$(printf "${CONTAINER_OUTPUT_DIR}/chunk_%04d" ${ARRAY_INDEX})
-
-export TOKENIZER="${TOKENIZER:-google/gemma-3-1b-pt}"
 export WORKERS="${WORKERS:-64}"  # Use all CPUs!
 export JSON_KEY="${JSON_KEY:-text}"
 
@@ -101,6 +114,11 @@ echo "Input (container): ${CHUNK_FILE_CONTAINER}"
 echo "Output: ${OUTPUT_PREFIX_CONTAINER}.{bin,idx}"
 echo "Tokenizer: ${TOKENIZER}"
 echo "Workers: ${WORKERS}"
+echo "Tokenization Mode: ${TOKENIZATION_MODE}"
+if [ "${TOKENIZATION_MODE}" = "stochastok" ]; then
+    echo "Expand Proportion: ${EXPAND_PROP}"
+    echo "Random Seed: ${SEED}"
+fi
 echo "============================================================================"
 echo ""
 
@@ -136,7 +154,10 @@ if [ -n "${BIND_MOUNTS:-}" ]; then
 fi
 
 ENROOT_ENV="-e HF_HOME=${HF_HOME} \
-    -e HF_TOKEN=${HF_TOKEN}"
+    -e HF_TOKEN=${HF_TOKEN} \
+    -e TOKENIZATION_MODE=${TOKENIZATION_MODE} \
+    -e EXPAND_PROP=${EXPAND_PROP} \
+    -e SEED=${SEED}"
 
 # ============================================================================
 # Run Preprocessing
@@ -150,7 +171,13 @@ PYTHON_CMD="python /workspace/training/nemo/data/preprocess_data.py \
     --output-prefix ${OUTPUT_PREFIX_CONTAINER} \
     --tokenizer-model ${TOKENIZER} \
     --workers ${WORKERS} \
-    --text-key ${JSON_KEY}"
+    --text-key ${JSON_KEY} \
+    --tokenization-mode ${TOKENIZATION_MODE}"
+
+# Add stochastok-specific parameters if in stochastok mode
+if [ "${TOKENIZATION_MODE}" = "stochastok" ]; then
+    PYTHON_CMD="${PYTHON_CMD} --expand-prop ${EXPAND_PROP} --seed ${SEED}"
+fi
 
 enroot start --rw \
     ${ENROOT_ENV} \

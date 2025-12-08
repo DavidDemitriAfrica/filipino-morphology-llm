@@ -112,7 +112,7 @@ distributed_args=(
 
 script_args=(
     "${PYTHON_SCRIPT}"
-    --data-path "${DATA_PATH}"
+    --data-path ${DATA_PATH}  # Don't quote to allow multiple space-separated paths
     --seq-length "${SEQ_LENGTH}"
     --max-steps "${MAX_STEPS}"
     --global-batch-size "${GBS}"

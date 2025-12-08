@@ -77,10 +77,16 @@ mkdir -p ${LOG_DIR}
 
 # Input/Output paths (can be overridden via qsub -v)
 export INPUT="${INPUT:-/workspace/data/corpora/seapile-v2.jsonl}"
-export OUTPUT_PREFIX="${OUTPUT_PREFIX:-/workspace/data/processed/seapile-v2}"  # Don't include _text_document!
 export TOKENIZER="${TOKENIZER:-google/gemma-3-1b-pt}"
+export TOKENIZER_NAME=$(echo ${TOKENIZER} | sed 's/\//-/g')  # Convert slashes to dashes for directory names
+export OUTPUT_PREFIX="${OUTPUT_PREFIX:-/workspace/data/processed/${TOKENIZER_NAME}/seapile-v2}"  # Don't include _text_document!
 export WORKERS="${WORKERS:-64}"
 export JSON_KEY="${JSON_KEY:-text}"
+
+# Tokenization mode: "vanilla" (default) or "stochastok"
+export TOKENIZATION_MODE="${TOKENIZATION_MODE:-vanilla}"
+export EXPAND_PROP="${EXPAND_PROP:-0.1}"  # Only used for stochastok mode
+export SEED="${SEED:-42}"  # Random seed for stochastok expansion
 
 # ============================================================================
 # Print Configuration
@@ -98,6 +104,11 @@ echo "Output Prefix: ${OUTPUT_PREFIX}"
 echo "Tokenizer: ${TOKENIZER}"
 echo "Workers: ${WORKERS}"
 echo "JSON Key: ${JSON_KEY}"
+echo "Tokenization Mode: ${TOKENIZATION_MODE}"
+if [ "${TOKENIZATION_MODE}" = "stochastok" ]; then
+    echo "Expand Proportion: ${EXPAND_PROP}"
+    echo "Random Seed: ${SEED}"
+fi
 echo ""
 echo "Container: ${CONTAINER_NAME}"
 echo "Log Directory: ${LOG_DIR}"
@@ -123,7 +134,10 @@ ENROOT_ENV="-e HF_HOME=${HF_HOME} \
     -e OUTPUT_PREFIX=${OUTPUT_PREFIX} \
     -e TOKENIZER=${TOKENIZER} \
     -e WORKERS=${WORKERS} \
-    -e JSON_KEY=${JSON_KEY}"
+    -e JSON_KEY=${JSON_KEY} \
+    -e TOKENIZATION_MODE=${TOKENIZATION_MODE} \
+    -e EXPAND_PROP=${EXPAND_PROP} \
+    -e SEED=${SEED}"
 
 # ============================================================================
 # Run Preprocessing
@@ -137,7 +151,13 @@ PYTHON_CMD="python /workspace/training/nemo/data/preprocess_data.py \
     --output-prefix ${OUTPUT_PREFIX} \
     --tokenizer-model ${TOKENIZER} \
     --workers ${WORKERS} \
-    --text-key ${JSON_KEY}"
+    --text-key ${JSON_KEY} \
+    --tokenization-mode ${TOKENIZATION_MODE}"
+
+# Add stochastok-specific parameters if in stochastok mode
+if [ "${TOKENIZATION_MODE}" = "stochastok" ]; then
+    PYTHON_CMD="${PYTHON_CMD} --expand-prop ${EXPAND_PROP} --seed ${SEED}"
+fi
 
 enroot start --rw \
     ${ENROOT_ENV} \

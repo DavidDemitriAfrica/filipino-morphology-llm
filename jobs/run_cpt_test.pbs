@@ -66,7 +66,9 @@ mkdir -p ${CKPT_DIR}
 # Test Configuration (Small values for quick testing)
 # ============================================================================
 
-export DATA_PATH="/workspace/data/corpora/seapile-v2_text_document"
+# Single path or multiple chunk paths (space-separated)
+# Note: Paths now include tokenizer name for organization
+export DATA_PATH="/workspace/data/processed/google-gemma-3-1b-pt/seapile-v2"
 export SEQ_LENGTH=512
 export MAX_STEPS=10
 export GBS=4
@@ -86,7 +88,7 @@ export VAL_CHECK_INTERVAL=5
 # Build Python Command
 # ============================================================================
 
-PYTHON_CMD="python /workspace/scripts/run_cpt.py \
+PYTHON_CMD="python /workspace/training/nemo/run_cpt.py \
     --data-path ${DATA_PATH} \
     --seq-length ${SEQ_LENGTH} \
     --max-steps ${MAX_STEPS} \

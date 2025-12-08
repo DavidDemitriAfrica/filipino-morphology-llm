@@ -27,13 +27,19 @@ def parse_args():
         "--output-dir",
         type=str,
         required=True,
-        help="Output directory for chunks",
+        help="Output directory for chunks (will create subdirectory based on tokenizer)",
     )
     parser.add_argument(
         "--num-chunks",
         type=int,
         default=10,
         help="Number of chunks to create",
+    )
+    parser.add_argument(
+        "--tokenizer",
+        type=str,
+        default="google/gemma-3-1b-pt",
+        help="Tokenizer name (used for organizing output directory)",
     )
     
     return parser.parse_args()
@@ -43,7 +49,10 @@ def main():
     args = parse_args()
     
     input_path = Path(args.input)
-    output_dir = Path(args.output_dir)
+    
+    # Create tokenizer-specific subdirectory
+    tokenizer_name = args.tokenizer.replace("/", "-")
+    output_dir = Path(args.output_dir) / tokenizer_name
     output_dir.mkdir(parents=True, exist_ok=True)
     
     print(f"Counting lines in {input_path}...")
@@ -52,6 +61,7 @@ def main():
     
     lines_per_chunk = (total_lines + args.num_chunks - 1) // args.num_chunks
     
+    print(f"Tokenizer: {args.tokenizer}")
     print(f"Total lines: {total_lines:,}")
     print(f"Chunks: {args.num_chunks}")
     print(f"Lines per chunk: ~{lines_per_chunk:,}")
@@ -82,12 +92,12 @@ def main():
     print(f"✓ Created {chunk_idx} chunks in {output_dir}")
     print()
     print("Next steps:")
-    print(f"  1. Submit parallel preprocessing:")
-    print(f"     qsub jobs/preprocess_data_parallel.pbs")
-    print(f"  2. Or process each chunk individually:")
-    for i in range(1, chunk_idx + 1):
-        chunk_name = f"chunk_{i:04d}"
-        print(f"     qsub -v INPUT=/workspace/{output_dir}/{chunk_name}.jsonl,OUTPUT=/workspace/{output_dir}/{chunk_name}_text_document jobs/preprocess_data.pbs")
+    print(f"  1. Submit parallel preprocessing (recommended):")
+    print(f"     qsub -J 1-{chunk_idx} -v TOKENIZER={args.tokenizer} jobs/preprocess_data_parallel.pbs")
+    print()
+    print(f"  2. Then use chunks in training:")
+    print(f"     export DATA_PATH=$(training/nemo/data/generate_chunk_paths.sh {chunk_idx} {args.tokenizer})")
+    print(f"     qsub jobs/run_cpt.pbs")
 
 
 if __name__ == "__main__":

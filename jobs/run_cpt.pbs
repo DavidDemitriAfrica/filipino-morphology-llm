@@ -100,7 +100,11 @@ mkdir -p ${LOG_DIR}/envvar
 # ============================================================================
 
 # Data configuration
-export DATA_PATH="${DATA_PATH:-/workspace/data/corpora/seapile-v2_text_document}"
+# Can specify single path or multiple chunk paths (space-separated)
+# Note: Paths now include tokenizer name for organization
+# Single: /workspace/data/processed/google-gemma-3-1b-pt/seapile-v2
+# Multiple chunks: /workspace/data/processed/google-gemma-3-1b-pt/chunk_0001 ...
+export DATA_PATH="${DATA_PATH:-/workspace/data/processed/google-gemma-3-1b-pt/seapile-v2}"
 export SEQ_LENGTH="${SEQ_LENGTH:-2048}"
 
 # Training configuration
