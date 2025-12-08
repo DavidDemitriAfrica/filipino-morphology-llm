@@ -73,9 +73,25 @@ mkdir -p ${CKPT_DIR}
 # Test Configuration (Small values for quick testing)
 # ============================================================================
 
-# Single path or multiple chunk paths (space-separated)
-# Note: Paths now include tokenizer name for organization
-export DATA_PATH="/workspace/data/processed/google-gemma-3-1b-pt/seapile-v2"
+# Determine tokenizer directory and find first chunk
+# Default to vanilla (google-gemma-3-1b-pt), can be overridden via qsub -v TOKENIZER_DIR=...
+export TOKENIZER_DIR="${TOKENIZER_DIR:-google-gemma-3-1b-pt}"
+export DATA_DIR_HOST="${JOB_WORK_DIR}/data/processed/${TOKENIZER_DIR}"
+
+# Find first chunk in the tokenizer directory
+FIRST_CHUNK=$(ls ${DATA_DIR_HOST}/chunk_0001.bin 2>/dev/null || ls ${DATA_DIR_HOST}/chunk_*.bin 2>/dev/null | head -1)
+
+if [ -z "$FIRST_CHUNK" ]; then
+    echo "Error: No chunks found in ${DATA_DIR_HOST}"
+    exit 1
+fi
+
+# Extract chunk prefix (remove .bin extension)
+CHUNK_PREFIX=$(basename ${FIRST_CHUNK} .bin)
+export DATA_PATH="/workspace/data/processed/${TOKENIZER_DIR}/${CHUNK_PREFIX}"
+
+echo "Using first chunk: ${DATA_PATH}"
+
 export SEQ_LENGTH=512
 export MAX_STEPS=10
 export GBS=4
@@ -85,7 +101,7 @@ export LR=1e-4
 export MIN_LR=1e-5
 export WARMUP_STEPS=5
 export CKPT_INTERVAL=5
-export RESUME_FROM="google/gemma-3-1b-pt"
+export RESUME_FROM="${RESUME_FROM:-google/gemma-3-1b-pt}"
 export WANDB_PROJECT="gemma3-cpt-test"
 export WANDB_NAME="test-${JOB_ID}"
 export LOG_EVERY_N_STEPS=1

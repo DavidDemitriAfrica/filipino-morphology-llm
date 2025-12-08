@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #PBS -N gemma3_cpt
-#PBS -l select=1:ncpus=32:ngpus=4:mem=256GB
-#PBS -l walltime=04:00:00
+#PBS -l select=1:ngpus=8:mem=512GB
+#PBS -l walltime=12:00:00
 #PBS -q AISG_debug
 #PBS -j oe
 #PBS -o /scratch_aisg/SPEC-SF-AISG/railey/logs/
@@ -107,15 +107,41 @@ mkdir -p ${LOG_DIR}/envvar
 # ============================================================================
 
 # Data configuration
-# Can specify single path or multiple chunk paths (space-separated)
-# Note: Paths now include tokenizer name for organization
-# Single: /workspace/data/processed/google-gemma-3-1b-pt/seapile-v2
-# Multiple chunks: /workspace/data/processed/google-gemma-3-1b-pt/chunk_0001 ...
-export DATA_PATH="${DATA_PATH:-/workspace/data/processed/google-gemma-3-1b-pt/seapile-v2}"
+# Determine tokenizer directory and load all chunks
+# Default to vanilla (google-gemma-3-1b-pt), can be overridden via qsub -v TOKENIZER_DIR=...
+export TOKENIZER_DIR="${TOKENIZER_DIR:-google-gemma-3-1b-pt}"
+export DATA_DIR_HOST="${JOB_WORK_DIR}/data/processed/${TOKENIZER_DIR}"
+
+# Check if directory exists
+if [ ! -d "${DATA_DIR_HOST}" ]; then
+    echo "Error: Data directory not found: ${DATA_DIR_HOST}"
+    exit 1
+fi
+
+# Find all chunks and build space-separated list of paths (without .bin/.idx extension)
+DATA_PATHS=""
+CHUNK_COUNT=0
+for chunk_file in ${DATA_DIR_HOST}/chunk_*.bin; do
+    if [ -f "$chunk_file" ]; then
+        # Remove .bin extension to get prefix
+        chunk_prefix=$(basename ${chunk_file} .bin)
+        DATA_PATHS="${DATA_PATHS} /workspace/data/processed/${TOKENIZER_DIR}/${chunk_prefix}"
+        CHUNK_COUNT=$((CHUNK_COUNT + 1))
+    fi
+done
+
+if [ ${CHUNK_COUNT} -eq 0 ]; then
+    echo "Error: No chunks found in ${DATA_DIR_HOST}"
+    exit 1
+fi
+
+echo "Found ${CHUNK_COUNT} chunks in ${TOKENIZER_DIR}"
+export DATA_PATH="${DATA_PATHS}"
+
 export SEQ_LENGTH="${SEQ_LENGTH:-2048}"
 
 # Training configuration
-export MAX_STEPS="${MAX_STEPS:-100}"
+export MAX_STEPS="${MAX_STEPS:-10000}"
 export GBS="${GBS:-256}"  # Global batch size
 export MBS="${MBS:-2}"    # Micro batch size
 export DEVICES="${DEVICES:-${GPUS_PER_NODE}}"
