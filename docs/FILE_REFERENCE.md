@@ -15,6 +15,7 @@ This document provides a quick lookup of important files and their roles in the 
 | `docs/USAGE.md` | Training workflow and PBS jobs |
 | `docs/AFFIX_PROCESSING.md` | Patok implementation details |
 | `docs/HIERARCHICAL_TASKS.md` | Hierarchical benchmark design |
+| `scripts/EVALUATION_README.md` | 📌 **Benchmark generation and evaluation guide** |
 
 ---
 
@@ -65,44 +66,69 @@ processed_ids = processor.expand_contract(token_ids)
 
 ## 📊 Evaluation Benchmarks
 
-### PACUTE (1,040 tasks)
-| File | Task Type | Count |
-|------|-----------|-------|
-| `src/evaluation/affixation.py` | Prefix/infix/suffix identification | 280 |
-| `src/evaluation/composition.py` | Character counting, word formation | 280 |
-| `src/evaluation/manipulation.py` | Insert/delete/swap operations | 320 |
-| `src/evaluation/syllabification.py` | Syllable counting/extraction | 160 |
-
-**Data**: `data/benchmarks/mcq_*.jsonl` and `gen_*.jsonl`
-
-### Hierarchical Benchmark (1,196 tasks)
+### Benchmark Generation Scripts (One-Stop)
 | File | Purpose |
 |------|---------|
-| `src/evaluation/hierarchical_tasks.py` | Task generator (6 levels) |
-| `src/evaluation/hierarchical_analysis.py` | Evaluation and analysis |
-| `scripts/generate_hierarchical_benchmark.py` | 📌 **Generate all tasks** |
+| `scripts/generate_all_benchmarks.py` | 📌 **Generate ALL benchmarks** (master script) |
+| `src/evaluation/datasets/scripts/generate_pacute_benchmarks.py` | Generate PACUTE benchmarks |
+| `src/evaluation/datasets/scripts/generate_hierarchical_benchmark.py` | Generate hierarchical tasks |
+| `src/evaluation/datasets/scripts/generate_langgame_benchmark.py` | Generate LangGame dataset |
+| `src/evaluation/datasets/scripts/generate_math_benchmark.py` | Generate multi-digit addition |
 
-**Data**: `data/benchmarks/hierarchical_mcq.jsonl` and `hierarchical_gen.jsonl`
+### PACUTE (5,845 tasks)
+| File | Task Type | Count (MCQ + Gen) |
+|------|-----------|-------------------|
+| `src/evaluation/datasets/generators/affixation.py` | Prefix/infix/suffix identification | 140 + 140 |
+| `src/evaluation/datasets/generators/composition.py` | Character counting, word formation | 2,505 + 1,400 |
+| `src/evaluation/datasets/generators/manipulation.py` | Insert/delete/swap operations | 2,560 + 2,560 |
+| `src/evaluation/datasets/generators/syllabification.py` | Syllable counting/extraction | 640 + 640 |
 
-### LangGame (1M tasks)
+**Data**: `data/benchmarks/{name}_{mcq|gen}.jsonl`
+
+### Hierarchical Benchmark (1,198 tasks)
 | File | Purpose |
 |------|---------|
-| `training/stochastok/data_processing/make_langgame_dataset.py` | 📌 **Generate dataset** |
+| `src/evaluation/datasets/generators/hierarchical.py` | Task generator (6 levels, 0-5) |
+| `src/evaluation/evaluators/hierarchical.py` | Evaluation and diagnostic analysis |
+| `scripts/demo_hierarchical_tasks.py` | Demo and usage examples |
+
+**Data**: `data/benchmarks/hierarchical_{mcq|gen}.jsonl`
+
+**Levels**:
+- Level 0: Character Recognition
+- Level 1: Character Manipulation  
+- Level 2: Morpheme Decomposition
+- Level 3: Morpheme Manipulation
+- Level 4: Morpheme Composition
+- Level 5: Complex Morphological Reasoning
+
+### LangGame (3,000 tasks)
+| File | Purpose |
+|------|---------|
+| `src/evaluation/datasets/scripts/generate_langgame_benchmark.py` | 📌 **Generate dataset** |
+
+**Data**: `data/benchmarks/langgame_{train|val}.jsonl` (2000 train, 1000 val)
 
 **Tasks**: Contains, starts with, ends with, longest, shortest, most of letter
 
-### Multi-Digit Addition (90K tasks)
+### Multi-Digit Addition (3,000 tasks)
 | File | Purpose |
 |------|---------|
-| `training/stochastok/data_processing/make_multi_digit_addition_dataset.py` | 📌 **Generate dataset** |
+| `src/evaluation/datasets/scripts/generate_math_benchmark.py` | 📌 **Generate dataset** |
 
-**Format**: 3-digit addition in 3 tokenization variants
+**Data**: `data/benchmarks/multi_digit_addition_{train|val}.jsonl` (2000 train, 1000 val)
+
+**Format**: 3-digit addition problems
 
 ### Morphological Analysis
 | File | Purpose |
 |------|---------|
 | `src/analysis/morphological_metrics.py` | 📌 **MorphScore, Boundary F1, Fragmentation** |
 | `src/analysis/information_theory.py` | Entropy and compression analysis |
+| `src/analysis/tokenization/` | Tokenization comparison tools |
+| `src/analysis/affixes/` | Affix coverage analysis |
+| `src/analysis/datasets/` | Dataset comparison tools |
+| `scripts/run_analysis.py` | 📌 **Unified analysis runner** |
 
 **Data**: `data/corpora/affix_annotations.jsonl` (472 annotated words)
 
@@ -110,15 +136,30 @@ processed_ids = processor.expand_contract(token_ids)
 
 ## 🔧 Utility Scripts
 
+### Core Scripts
 | Script | Purpose | When to Use |
 |--------|---------|-------------|
 | `scripts/download_seapile.py` | Download seapile-v2 dataset | Before preprocessing |
-| `scripts/generate_hierarchical_benchmark.py` | Create hierarchical tasks | Already done (data/benchmarks/) |
-| `scripts/create_affix_annotations.py` | Generate morpheme annotations | Already done (472 words) |
-| `scripts/analyze_tokenization_simple.py` | Baseline BPE analysis | Analyze tokenizer morphological alignment |
-| `scripts/compare_tokenizers.py` | Oracle vs baseline comparison | Compare different tokenizers |
-| `scripts/analyze_affix_coverage.py` | Vocabulary coverage | Check affix presence in vocab |
 | `scripts/verify_setup.py` | Installation check | After environment setup |
+| `scripts/create_affix_annotations.py` | Generate morpheme annotations | Already done (472 words) |
+
+### Evaluation Scripts
+| Script | Purpose | When to Use |
+|--------|---------|-------------|
+| `scripts/generate_all_benchmarks.py` | 📌 **Generate ALL benchmarks** | Creates all evaluation datasets |
+| `scripts/run_benchmark_evaluation.py` | 📌 **Evaluate models on benchmarks** | Test model performance |
+| `scripts/demo_hierarchical_tasks.py` | Demo hierarchical framework | See examples of hierarchical tasks |
+| `scripts/evaluate_downstream.py` | Downstream task evaluation | Evaluate on specific benchmarks |
+
+### Analysis Scripts
+| Script | Purpose | When to Use |
+|--------|---------|-------------|
+| `scripts/run_analysis.py` | 📌 **Unified analysis runner** | Run all analysis tools |
+
+**Analysis modules** are in `src/analysis/`:
+- `tokenization/`: Tokenization comparison (simple, comprehensive, compare)
+- `affixes/`: Affix coverage analysis
+- `datasets/`: Dataset comparison tools
 
 ---
 
@@ -134,19 +175,23 @@ processed_ids = processor.expand_contract(token_ids)
 ### Evaluation Data
 | Path | Description | Count |
 |------|-------------|-------|
-| `data/benchmarks/mcq_*.jsonl` | PACUTE MCQ format | 1,040 |
-| `data/benchmarks/gen_*.jsonl` | PACUTE generative format | 1,040 |
-| `data/benchmarks/hierarchical_*.jsonl` | Diagnostic tasks | 1,196 |
-| `data/benchmarks/stress_*.jsonl` | Stress pattern tasks | Available |
+| `data/benchmarks/affixation_{mcq\|gen}.jsonl` | Affix tasks | 140 + 140 |
+| `data/benchmarks/composition_{mcq\|gen}.jsonl` | Composition tasks | 2,505 + 1,400 |
+| `data/benchmarks/manipulation_{mcq\|gen}.jsonl` | Manipulation tasks | 2,560 + 2,560 |
+| `data/benchmarks/syllabification_{mcq\|gen}.jsonl` | Syllabification tasks | 640 + 640 |
+| `data/benchmarks/hierarchical_{mcq\|gen}.jsonl` | Hierarchical tasks (6 levels) | 598 + 600 |
+| `data/benchmarks/langgame_{train\|val}.jsonl` | LangGame tasks | 2,000 + 1,000 |
+| `data/benchmarks/multi_digit_addition_{train\|val}.jsonl` | Math tasks | 2,000 + 1,000 |
+| `data/benchmarks/stress_{mcq\|gen}.jsonl` | Stress pattern tasks | Available |
 
 ### Linguistic Resources
 | Path | Description | Count |
 |------|-------------|-------|
-| `data/affixes/filipino_affixes.txt` | Filipino affix list | 93 affixes |
+| `data/affixes/filipino_affixes.txt` | Filipino affix list | 92 affixes |
 | `data/corpora/affix_annotations.jsonl` | Morpheme-annotated words | 472 words |
+| `data/corpora/pacute_data/inflections.xlsx` | Inflection pairs | 80 pairs |
 | `data/corpora/pacute_data/syllables.jsonl` | Syllabified words | 16,828 words |
-| `data/corpora/pacute_data/word_frequencies.csv` | Word frequencies | 118,801 entries |
-| `data/corpora/top_1k_words` | Most common words | 1,000 words |
+| `data/word_frequencies.csv` | Word frequencies | 118,801 entries |
 
 ---
 

@@ -43,7 +43,7 @@ def load_pacute(split="test", categories=None, **kwargs):
     category_counts = {}
 
     for category in categories:
-        mcq_file = os.path.join(project_root, f"data/benchmarks/mcq_{category}.jsonl")
+        mcq_file = os.path.join(project_root, f"data/benchmarks/{category}_mcq.jsonl")
 
         if not os.path.exists(mcq_file):
             print(f"Warning: PACUTE file not found: {mcq_file}")

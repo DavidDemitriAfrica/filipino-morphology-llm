@@ -1,6 +1,8 @@
 """Code for running samples from the evaluation benchmarks"""
 
-from evals.load_evaluators import load_evaluator
+# Legacy import - use evaluation.evaluators.registry instead
+# from evals.load_evaluators import load_evaluator
+from evaluation.evaluators.registry import load_evaluator
 
 def train_eval(eval_cfg, model, cfg):
     """Train the model"""

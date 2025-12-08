@@ -13,7 +13,7 @@ def test_affix_processing():
         tokenizer=tokenizer,
         expand_prop=0.5,
         contract_prop=0.5,
-        affixes_file="data_other/filipino_affixes.txt"
+        affixes_file="data/affixes/filipino_affixes.txt"
     )
     
     # Test text with Filipino affixes

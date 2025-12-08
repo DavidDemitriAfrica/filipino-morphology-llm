@@ -15,15 +15,22 @@ Output: MCQ and generative format files for each level
 import json
 import pandas as pd
 import sys
-sys.path.insert(0, '.')
+from pathlib import Path
 
-from src.evaluation.hierarchical_tasks import HierarchicalTaskGenerator
+# Add src to path
+# Go up 5 levels: scripts -> datasets -> evaluation -> src -> filipino-morphology-llm
+project_root = Path(__file__).parent.parent.parent.parent.parent
+sys.path.insert(0, str(project_root / "src"))
+
+from evaluation.datasets.generators.hierarchical import HierarchicalTaskGenerator
 
 
 def load_words_for_tasks():
     """Load syllabified words for task generation."""
     words = []
-    with open('data/corpora/pacute_data/syllables.jsonl') as f:
+    syllables_path = project_root / 'data' / 'corpora' / 'pacute_data' / 'syllables.jsonl'
+    
+    with open(syllables_path) as f:
         for line in f:
             data = json.loads(line)
             word = data.get('normalized_word', '').lower()
@@ -42,7 +49,9 @@ def load_words_for_tasks():
 def load_affix_annotations():
     """Load morpheme annotations and reshape to expected format."""
     annotations = []
-    with open('data/corpora/affix_annotations.jsonl') as f:
+    annotations_path = project_root / 'data' / 'corpora' / 'affix_annotations.jsonl'
+    
+    with open(annotations_path) as f:
         for line in f:
             data = json.loads(line)
 
@@ -268,11 +277,15 @@ def main():
     # Generate tasks
     mcq_tasks, gen_tasks = generate_all_levels(words_df, affixes_df, tasks_per_level=100)
 
+    # Ensure output directory exists
+    output_dir = project_root / 'data' / 'benchmarks'
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     # Save tasks
     print()
     print("Saving tasks...")
-    save_tasks(mcq_tasks, 'data/benchmarks/hierarchical_mcq.jsonl', 'mcq')
-    save_tasks(gen_tasks, 'data/benchmarks/hierarchical_gen.jsonl', 'gen')
+    save_tasks(mcq_tasks, output_dir / 'hierarchical_mcq.jsonl', 'mcq')
+    save_tasks(gen_tasks, output_dir / 'hierarchical_gen.jsonl', 'gen')
 
     print()
     print("=" * 70)

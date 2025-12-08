@@ -7,8 +7,8 @@ import datasets
 from datasets import Dataset, DatasetDict
 import json
 
-from models.components.base_tokenizer import BaseTokenizer
-from dataset_preprocessing.utils import save_as_memmaps
+# from models.components.base_tokenizer import BaseTokenizer
+# from dataset_preprocessing.utils import save_as_memmaps
 
 
 # Building blocks
@@ -262,102 +262,131 @@ for question_type_idx in range(6):
     print(f"Answer: {answer1}")
     print(f"Options: {options}")
 
-# Tokenizer
-tokenizer = BaseTokenizer()
+# Tokenizer (commented out - only needed for memmap generation)
+# tokenizer = BaseTokenizer()
 
-# Generate dataset and tokenize
+# Generate dataset
 print("Generating dataset...")
 total_options = 4
 start_time = time.time()
-train_size = int(1e6)
+train_size = 2000  # Reduced from 1e6 for benchmark generation
 val_size = 1000
 dataset_size = train_size + val_size
 question_s = []
 answer_s = []
 options_s = []
-full_tokenized_s = []
-idxs_for_masks_s = []
+# full_tokenized_s = []
+# idxs_for_masks_s = []
 for i in tqdm.tqdm(range(int(dataset_size*2))):
     # ^ *2 so that collect a total of dataset_size examples even if some iters fail to find a question
-    if len(full_tokenized_s) >= dataset_size:
+    if len(question_s) >= dataset_size:
         break
     question_type_idx = np.random.choice([0, 1, 2, 3, 4, 5])
     question, answer, options = build_question(question_type_idx, top_1k_words, total_options)
     if question is not None:
-        question_t = tokenizer.encode(question)
-        answer_t = tokenizer.encode(answer)
-        full_tokenized = question_t + answer_t
-        idxs_for_masks = np.array([0, len(question_t), len(question_t)+len(answer_t)])
+        # question_t = tokenizer.encode(question)
+        # answer_t = tokenizer.encode(answer)
+        # full_tokenized = question_t + answer_t
+        # idxs_for_masks = np.array([0, len(question_t), len(question_t)+len(answer_t)])
         question_s.append(question)
         answer_s.append(answer)
         options_s.append(options)
-        full_tokenized_s.append(full_tokenized)
-        idxs_for_masks_s.append(idxs_for_masks)
+        # full_tokenized_s.append(full_tokenized)
+        # idxs_for_masks_s.append(idxs_for_masks)
 print(f"Time taken: {time.time()-start_time:.2f}s\n")
 
-# Pad for saving as memmaps
-print("Padding for saving as memmaps...")
-max_len = max([len(full_tokenized) for full_tokenized in full_tokenized_s])
-padded_full_tokenized_s = np.array([x + [tokenizer.eot_token]*(max_len-len(x)) for x in full_tokenized_s])
-idxs_for_masks_s = np.array(idxs_for_masks_s)
-padded_full_tokenized_s.shape, idxs_for_masks_s.shape
-print(f"Padding done.\n")
+# # Pad for saving as memmaps (commented out - only generating JSONL)
+# print("Padding for saving as memmaps...")
+# max_len = max([len(full_tokenized) for full_tokenized in full_tokenized_s])
+# padded_full_tokenized_s = np.array([x + [tokenizer.eot_token]*(max_len-len(x)) for x in full_tokenized_s])
+# idxs_for_masks_s = np.array(idxs_for_masks_s)
+# padded_full_tokenized_s.shape, idxs_for_masks_s.shape
+# print(f"Padding done.\n")
+# 
+# # Save as memmaps
+# as_memmaps_path = os.path.join("./data", "data_as_memmaps", "langgame")
+# print(f"Saving as memmaps to {as_memmaps_path}...")
+# if not os.path.exists(as_memmaps_path):
+#     os.makedirs(as_memmaps_path)
+# all_tokenize_data = {
+#     "train": {
+#         "data": padded_full_tokenized_s[:train_size],
+#         "idxs_for_masks": idxs_for_masks_s[:train_size],
+#     },
+#     "val": {
+#         "data": padded_full_tokenized_s[train_size:],
+#         "idxs_for_masks": idxs_for_masks_s[train_size:],
+#     }
+# }
+# for split, split_data in all_tokenize_data.items():
+#     for name, data in split_data.items():
+#         save_as_memmaps(data, f"{split}_{name}", as_memmaps_path)
+# shapes = {"train_size": train_size, "val_size": val_size}
+# with open(os.path.join(as_memmaps_path, f"shapes.json"), "w") as f:
+#     json.dump(shapes, f)
+# print(f"Memmaps saved.\n")
+# 
+# # Load memmaps and print (as a check)
+# print("Loading memmaps and printing shapes (as a check)...")
+# # Load the memmap files
+# loaded_train_data = np.memmap(f"{as_memmaps_path}/train_data.bin", dtype=np.uint16, mode="r").reshape(train_size, -1)
+# loaded_train_idxs_for_masks = np.memmap(f"{as_memmaps_path}/train_idxs_for_masks.bin", dtype=np.uint16, mode="r").reshape(train_size, 3)
+# loaded_val_data = np.memmap(f"{as_memmaps_path}/val_data.bin", dtype=np.uint16, mode="r").reshape(val_size, -1)
+# loaded_val_idxs_for_masks = np.memmap(f"{as_memmaps_path}/val_idxs_for_masks.bin", dtype=np.uint16, mode="r").reshape(val_size, 3)
+# print(f"{loaded_train_data.shape=}, {loaded_train_idxs_for_masks.shape=}, {loaded_val_data.shape=}, {loaded_val_idxs_for_masks.shape=}\n")
+# 
+# # Save untokenized as dataset
+# as_datasets_path = os.path.join("./data", "data_as_datasets", "langgame")
+# print(f"Saving dataset to {as_datasets_path}...")
+# if not os.path.exists(as_datasets_path):
+#     os.makedirs(as_datasets_path)
+# train_dataset = Dataset.from_dict({"question": question_s[:val_size], "options": options_s[:val_size]})
+# val_dataset = Dataset.from_dict({"question": question_s[train_size:], "options": options_s[train_size:]})
+# datasets_untokenized = DatasetDict({
+#     "train": train_dataset,
+#     "val": val_dataset
+# })
+# datasets_untokenized.save_to_disk(as_datasets_path)
+# print(f"Dataset saved.\n")
 
-# Save as memmaps
-as_memmaps_path = os.path.join("./data", "data_as_memmaps", "langgame")
-print(f"Saving as memmaps to {as_memmaps_path}...")
-if not os.path.exists(as_memmaps_path):
-    os.makedirs(as_memmaps_path)
-all_tokenize_data = {
-    "train": {
-        "data": padded_full_tokenized_s[:train_size],
-        "idxs_for_masks": idxs_for_masks_s[:train_size],
-    },
-    "val": {
-        "data": padded_full_tokenized_s[train_size:],
-        "idxs_for_masks": idxs_for_masks_s[train_size:],
-    }
-}
-for split, split_data in all_tokenize_data.items():
-    for name, data in split_data.items():
-        save_as_memmaps(data, f"{split}_{name}", as_memmaps_path)
-shapes = {"train_size": train_size, "val_size": val_size}
-with open(os.path.join(as_memmaps_path, f"shapes.json"), "w") as f:
-    json.dump(shapes, f)
-print(f"Memmaps saved.\n")
+# Save as JSONL for benchmarking
+benchmarks_path = os.path.join("./data", "benchmarks")
+if not os.path.exists(benchmarks_path):
+    os.makedirs(benchmarks_path)
+print(f"Saving JSONL benchmarks to {benchmarks_path}...")
+# Train split
+train_jsonl_path = os.path.join(benchmarks_path, "langgame_train.jsonl")
+with open(train_jsonl_path, 'w', encoding='utf-8') as f:
+    for i in range(train_size):
+        item = {
+            "question": question_s[i],
+            "answer": answer_s[i],
+            "options": options_s[i]
+        }
+        f.write(json.dumps(item, ensure_ascii=False) + '\n')
+print(f"✓ Saved {train_size} train samples to {train_jsonl_path}")
+# Val split
+val_jsonl_path = os.path.join(benchmarks_path, "langgame_val.jsonl")
+with open(val_jsonl_path, 'w', encoding='utf-8') as f:
+    for i in range(train_size, train_size + val_size):
+        item = {
+            "question": question_s[i],
+            "answer": answer_s[i],
+            "options": options_s[i]
+        }
+        f.write(json.dumps(item, ensure_ascii=False) + '\n')
+print(f"✓ Saved {val_size} val samples to {val_jsonl_path}\n")
 
-# Load memmaps and print (as a check)
-print("Loading memmaps and printing shapes (as a check)...")
-# Load the memmap files
-loaded_train_data = np.memmap(f"{as_memmaps_path}/train_data.bin", dtype=np.uint16, mode="r").reshape(train_size, -1)
-loaded_train_idxs_for_masks = np.memmap(f"{as_memmaps_path}/train_idxs_for_masks.bin", dtype=np.uint16, mode="r").reshape(train_size, 3)
-loaded_val_data = np.memmap(f"{as_memmaps_path}/val_data.bin", dtype=np.uint16, mode="r").reshape(val_size, -1)
-loaded_val_idxs_for_masks = np.memmap(f"{as_memmaps_path}/val_idxs_for_masks.bin", dtype=np.uint16, mode="r").reshape(val_size, 3)
-print(f"{loaded_train_data.shape=}, {loaded_train_idxs_for_masks.shape=}, {loaded_val_data.shape=}, {loaded_val_idxs_for_masks.shape=}\n")
-
-# Save untokenized as dataset
-as_datasets_path = os.path.join("./data", "data_as_datasets", "langgame")
-print(f"Saving dataset to {as_datasets_path}...")
-if not os.path.exists(as_datasets_path):
-    os.makedirs(as_datasets_path)
-train_dataset = Dataset.from_dict({"question": question_s[:val_size], "options": options_s[:val_size]})
-val_dataset = Dataset.from_dict({"question": question_s[train_size:], "options": options_s[train_size:]})
-datasets_untokenized = DatasetDict({
-    "train": train_dataset,
-    "val": val_dataset
-})
-datasets_untokenized.save_to_disk(as_datasets_path)
-print(f"Dataset saved.\n")
-
-# Load and print (as a check)
-print("Loading and printing some examples:")
-loaded_dataset = datasets.load_from_disk(as_datasets_path)
-print(loaded_dataset)
-for split in ["train", "val"]:
-    for i in range(5):
-        print(loaded_dataset[split][i])
+# # Load and print (as a check)
+# print("Loading and printing some examples:")
+# loaded_dataset = datasets.load_from_disk(as_datasets_path)
+# print(loaded_dataset)
+# for split in ["train", "val"]:
+#     for i in range(5):
+#         print(loaded_dataset[split][i])
 
 print(f"\nLangGame dataset generation complete.")
+print(f"Generated {train_size + val_size} total samples ({train_size} train, {val_size} val)")
 
 
 

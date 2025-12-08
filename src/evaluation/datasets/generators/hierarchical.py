@@ -21,13 +21,13 @@ from typing import Dict, List, Tuple, Optional, Literal
 from dataclasses import dataclass, field
 import pandas as pd
 
-from .string_operations import (
+from ...utils.strings import (
     spell_string,
     chars_to_string,
     string_to_chars,
 )
-from .syllabification_operations import syllabify
-from .utils import prepare_mcq_outputs, prepare_gen_outputs
+from ...utils.syllabification import syllabify
+from ...utils.helpers import prepare_mcq_outputs, prepare_gen_outputs
 
 
 # Simple position-specific operations for hierarchical tasks
@@ -425,11 +425,13 @@ class HierarchicalTaskGenerator:
         Example: "Swap positions 2 and 4 in 'kumain'" → "kmauin"
         """
         tasks = []
-        words = self.words_df.sample(n)["word"].tolist()
+        # Filter for words with length >= 4 first, then sample
+        valid_words = self.words_df[self.words_df["word"].str.len() >= 4]
+        if len(valid_words) < n:
+            raise ValueError(f"Not enough words with length >= 4. Need {n}, have {len(valid_words)}")
+        words = valid_words.sample(n)["word"].tolist()
 
         for word in words:
-            if len(word) < 4:
-                continue
 
             pos1, pos2 = random.sample(range(1, len(word) + 1), 2)
             if pos1 > pos2:

@@ -214,7 +214,7 @@ class PatokProcessor:
     def load_affixes(self, affixes_file=None):
         """Load Filipino affixes from file and convert them to token IDs."""
         if affixes_file is None:
-            affixes_file = "data_other/filipino_affixes.txt"
+            affixes_file = "data/affixes/filipino_affixes.txt"
         
         affixes_file_path = get_file_path(affixes_file)
         self.affix_strings = []

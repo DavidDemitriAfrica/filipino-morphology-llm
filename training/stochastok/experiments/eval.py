@@ -1,11 +1,15 @@
 """
-The main eval code
+The main eval code for stochastok training pipeline.
+
+NOTE: This requires the stochastok training environment with specific model interfaces.
 """
 
 import hydra
 import torch
 
-from evals.load_evaluators import load_evaluator
+# Legacy import - use evaluation.evaluators.registry instead
+# from evals.load_evaluators import load_evaluator
+from evaluation.evaluators.registry import load_evaluator
 from models.build_models import build_model
 
 

@@ -11,13 +11,13 @@ from typing import Dict, List, Any, Optional
 import pandas as pd
 import Levenshtein
 
-from .constants import (
+from ...utils.constants import (
     AFFIX_TYPES,
     MCQ_LABEL_MAP,
     NUM_MCQ_OPTIONS,
     NUM_INCORRECT_OPTIONS
 )
-from .utils import prepare_mcq_outputs, prepare_gen_outputs
+from ...utils.helpers import prepare_mcq_outputs, prepare_gen_outputs
 
 
 def _get_affix_inflection_prompts(affix_type: str) -> tuple[str, str]:

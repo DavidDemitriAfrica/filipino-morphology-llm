@@ -10,10 +10,10 @@ questions (MCQ) and generative (GEN) formats.
 import random
 from typing import Dict, List, Any, Optional
 import pandas as pd
-from .string_operations import (
+from ...utils.strings import (
     string_to_chars, chars_to_string, spell_string, perturb_string, get_random_char
 )
-from .constants import (
+from ...utils.constants import (
     MCQ_LABEL_MAP,
     NUM_MCQ_OPTIONS,
     NUM_INCORRECT_OPTIONS,
@@ -22,7 +22,7 @@ from .constants import (
     UPPERCASE_LETTERS,
     UPPERCASE_DIACRITICS
 )
-from .utils import prepare_mcq_outputs, prepare_gen_outputs
+from ...utils.helpers import prepare_mcq_outputs, prepare_gen_outputs
 
 
 # ============================================================================
@@ -724,7 +724,7 @@ def _apply_frequency_weighting(syllables_df: pd.DataFrame, freq_weight: float, r
     Returns:
         DataFrame with frequency rankings and sampling applied
     """
-    from .sampling import load_frequency_data, add_frequency_ranks, sample_by_frequency
+    from evaluation.utils.sampling import load_frequency_data, add_frequency_ranks, sample_by_frequency
     freq_df = load_frequency_data()
     syllables_df = add_frequency_ranks(syllables_df, freq_df)
     syllables_df = sample_by_frequency(
@@ -823,7 +823,7 @@ def create_composition_dataset(
                 # For multi tasks, we need to maintain the full dataset but reordered by frequency
                 if freq_weight > 0:
                     # Get frequency-weighted full dataset (all rows, just reordered)
-                    from .sampling import load_frequency_data, add_frequency_ranks
+                    from ...utils.sampling import load_frequency_data, add_frequency_ranks
                     freq_df = load_frequency_data()
                     temp_df = add_frequency_ranks(syllables_df, freq_df)
                     # Sort by rank (lower rank = more common = higher priority)
@@ -832,10 +832,23 @@ def create_composition_dataset(
                     shuffled_dataset = syllables_df.sample(frac=1, random_state=random_seed).reset_index(drop=True)
                 
                 processed_count = 0
-                for _, rows in shuffled_dataset.groupby(lambda x: x // 4):
-                    if processed_count >= num_samples:
-                        break
-
+                attempts = 0
+                max_attempts = len(shuffled_dataset) // 4 * 3  # Allow up to 3x the dataset size in attempts
+                
+                # Keep cycling through the dataset until we get enough samples
+                while processed_count < num_samples and attempts < max_attempts:
+                    # Get a group of 4 samples
+                    start_idx = (attempts * 4) % len(shuffled_dataset)
+                    end_idx = min(start_idx + 4, len(shuffled_dataset))
+                    
+                    # If we're at the end, wrap around
+                    if end_idx - start_idx < 4:
+                        rows = shuffled_dataset.iloc[start_idx:end_idx]
+                        remaining = 4 - (end_idx - start_idx)
+                        rows = pd.concat([rows, shuffled_dataset.iloc[:remaining]])
+                    else:
+                        rows = shuffled_dataset.iloc[start_idx:end_idx]
+                    
                     samples = rows.to_dict(orient="records")
                     mcq_row = None
 
@@ -863,6 +876,8 @@ def create_composition_dataset(
                             "prompts": [mcq_row["prompts"]],
                         })], ignore_index=True)
                         processed_count += 1
+                    
+                    attempts += 1
 
         # Shuffle options and assign labels
         dataset = _shuffle_mcq_options(dataset, random_seed)

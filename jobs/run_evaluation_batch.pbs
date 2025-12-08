@@ -1,0 +1,210 @@
+#!/bin/bash
+
+#PBS -N eval_batch
+#PBS -l select=1:ncpus=16:ngpus=1:mem=64GB
+#PBS -l walltime=12:00:00
+#PBS -q AISG_debug
+#PBS -j oe
+#PBS -o /scratch_aisg/SPEC-SF-AISG/railey/logs/
+
+# ============================================================================
+# PBS Job Script for Batch Benchmark Evaluation
+# ============================================================================
+#
+# This script runs batch evaluation on multiple models and benchmarks.
+#
+# Usage:
+#   qsub jobs/run_evaluation_batch.pbs
+#
+# To customize models and benchmarks:
+#   qsub -v MODELS="gpt2 qwen-2.5-0.5b",BENCHMARKS="pacute cute" jobs/run_evaluation_batch.pbs
+#
+# To limit samples for testing:
+#   qsub -v MAX_SAMPLES=100 jobs/run_evaluation_batch.pbs
+#
+# ============================================================================
+
+set -euo pipefail
+
+# ============================================================================
+# Setup Environment
+# ============================================================================
+
+export JOB_WORK_DIR=${PBS_O_WORKDIR}
+export JOB_ID=${PBS_JOBID}
+export JOB_NAME=${PBS_JOBNAME}
+
+cd ${JOB_WORK_DIR}
+
+# Load conda environment
+if [ -f "${JOB_WORK_DIR}/env/bin/activate" ]; then
+    echo "Activating conda environment..."
+    source "${JOB_WORK_DIR}/env/bin/activate"
+else
+    echo "Warning: Conda environment not found at ${JOB_WORK_DIR}/env"
+    echo "Please create the environment first: conda create -p env python=3.11"
+    exit 1
+fi
+
+# ============================================================================
+# Directory Setup
+# ============================================================================
+
+export LOG_DIR="/scratch_aisg/SPEC-SF-AISG/railey/logs/evaluation/${JOB_ID}"
+export OUTPUT_DIR="${OUTPUT_DIR:-${JOB_WORK_DIR}/results/benchmark_evaluation}"
+
+mkdir -p ${LOG_DIR}
+mkdir -p ${OUTPUT_DIR}
+
+# ============================================================================
+# Evaluation Configuration
+# ============================================================================
+
+# Can be overridden via qsub -v
+export MAX_SAMPLES="${MAX_SAMPLES:-}"  # Empty means all samples
+export DEVICE="${DEVICE:-cuda}"
+
+# Default model groups (can be overridden)
+MODELS_GPT2="${MODELS_GPT2:-gpt2 gpt2-medium gpt2-large}"
+MODELS_QWEN="${MODELS_QWEN:-qwen-2.5-0.5b qwen-2.5-0.5b-it qwen-2.5-1.5b qwen-2.5-1.5b-it}"
+MODELS_CEREBRAS="${MODELS_CEREBRAS:-cerebras-gpt-111m cerebras-gpt-256m cerebras-gpt-590m}"
+MODELS_LLAMA="${MODELS_LLAMA:-llama-3.2-1b llama-3.2-1b-it}"
+MODELS_GEMMA="${MODELS_GEMMA:-gemma-2b gemma-2b-it}"
+
+# Benchmarks to run (can be overridden)
+BENCHMARKS="${BENCHMARKS:-pacute cute hierarchical langgame math}"
+
+# ============================================================================
+# Print Configuration
+# ============================================================================
+
+echo "============================================================================"
+echo "Batch Evaluation Configuration"
+echo "============================================================================"
+echo "Job ID: ${JOB_ID}"
+echo "Job Name: ${JOB_NAME}"
+echo "Working Directory: ${JOB_WORK_DIR}"
+echo ""
+echo "Models:"
+echo "  GPT-2: ${MODELS_GPT2}"
+echo "  Qwen: ${MODELS_QWEN}"
+echo "  Cerebras: ${MODELS_CEREBRAS}"
+echo "  Llama: ${MODELS_LLAMA}"
+echo "  Gemma: ${MODELS_GEMMA}"
+echo ""
+echo "Benchmarks: ${BENCHMARKS}"
+echo "Max Samples: ${MAX_SAMPLES:-all}"
+echo "Device: ${DEVICE}"
+echo ""
+echo "Output Directory: ${OUTPUT_DIR}"
+echo "Log Directory: ${LOG_DIR}"
+echo "============================================================================"
+echo ""
+
+# ============================================================================
+# Helper Function to Run Evaluation
+# ============================================================================
+
+run_evaluation() {
+    local model_group=$1
+    local models=$2
+    
+    echo ""
+    echo "========================================================================"
+    echo "Running ${model_group}"
+    echo "========================================================================"
+    
+    local cmd="python scripts/run_evaluation.py \
+        --models ${models} \
+        --benchmarks ${BENCHMARKS} \
+        --output-dir ${OUTPUT_DIR} \
+        --device ${DEVICE}"
+    
+    if [ -n "${MAX_SAMPLES}" ]; then
+        cmd="${cmd} --max-samples ${MAX_SAMPLES}"
+    fi
+    
+    echo "Command: ${cmd}"
+    echo ""
+    
+    eval ${cmd} 2>&1 | tee ${LOG_DIR}/${model_group}.log
+    
+    local exit_code=${PIPESTATUS[0]}
+    if [ ${exit_code} -eq 0 ]; then
+        echo "✓ ${model_group} completed successfully"
+    else
+        echo "✗ ${model_group} failed with exit code ${exit_code}"
+    fi
+    
+    return ${exit_code}
+}
+
+# ============================================================================
+# Run Evaluations
+# ============================================================================
+
+echo "Starting benchmark evaluations..."
+echo ""
+
+# Track success/failure
+SUCCESS_COUNT=0
+FAIL_COUNT=0
+
+# GPT-2 models (small, fast - good for testing)
+if run_evaluation "gpt2" "${MODELS_GPT2}"; then
+    ((SUCCESS_COUNT++))
+else
+    ((FAIL_COUNT++))
+fi
+
+# Qwen models
+if run_evaluation "qwen" "${MODELS_QWEN}"; then
+    ((SUCCESS_COUNT++))
+else
+    ((FAIL_COUNT++))
+fi
+
+# Cerebras GPT models
+if run_evaluation "cerebras" "${MODELS_CEREBRAS}"; then
+    ((SUCCESS_COUNT++))
+else
+    ((FAIL_COUNT++))
+fi
+
+# Llama models (may require HuggingFace authentication)
+if run_evaluation "llama" "${MODELS_LLAMA}"; then
+    ((SUCCESS_COUNT++))
+else
+    ((FAIL_COUNT++))
+    echo "Note: Llama models may require HuggingFace authentication"
+fi
+
+# Gemma models (may require HuggingFace authentication)
+if run_evaluation "gemma" "${MODELS_GEMMA}"; then
+    ((SUCCESS_COUNT++))
+else
+    ((FAIL_COUNT++))
+    echo "Note: Gemma models may require HuggingFace authentication"
+fi
+
+# ============================================================================
+# Summary
+# ============================================================================
+
+echo ""
+echo "============================================================================"
+echo "Evaluation Summary"
+echo "============================================================================"
+echo "Successful model groups: ${SUCCESS_COUNT}"
+echo "Failed model groups: ${FAIL_COUNT}"
+echo ""
+echo "Results saved to: ${OUTPUT_DIR}"
+echo "Logs saved to: ${LOG_DIR}"
+echo "============================================================================"
+
+# Exit with error if any group failed
+if [ ${FAIL_COUNT} -gt 0 ]; then
+    exit 1
+fi
+
+exit 0

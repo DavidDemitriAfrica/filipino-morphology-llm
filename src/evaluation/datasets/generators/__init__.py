@@ -1,12 +1,8 @@
 """
-Evaluation package for Filipino morphology LLM
-
-Contains modules for dataset generation, evaluation, and analysis.
+Dataset generators for various morphological tasks.
 """
 
-__version__ = "0.1.0"
-
-# Note: Import specific modules from subpackages as needed:
+# Note: Import functions directly from modules as needed, e.g.:
 # from evaluation.datasets.generators.affixation import create_affixation_dataset
 # from evaluation.datasets.generators.composition import create_composition_dataset
 # from evaluation.datasets.generators.manipulation import create_manipulation_dataset

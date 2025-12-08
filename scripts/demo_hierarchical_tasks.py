@@ -11,14 +11,14 @@ Shows how to:
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 import pandas as pd
 import json
 from pathlib import Path
 
-from src.evaluation import (
-    HierarchicalTaskGenerator,
+from evaluation.datasets.generators.hierarchical import HierarchicalTaskGenerator
+from evaluation.evaluators.hierarchical import (
     HierarchicalAnalyzer,
     compare_multiple_models,
     visualize_capability_profile,

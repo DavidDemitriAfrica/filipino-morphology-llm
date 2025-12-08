@@ -104,3 +104,6 @@ container_cache/
 
 # NVIDIA NeMo experiment outputs
 nemo_experiments/
+
+# Results
+results/benchmark_evaluation/*

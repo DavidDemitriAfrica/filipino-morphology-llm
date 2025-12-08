@@ -1,4 +1,13 @@
-"""Analysis tools for morphological and information-theoretic evaluation"""
+"""
+Analysis tools for morphological and information-theoretic evaluation.
+
+Structure:
+- morphological_metrics.py: Core morphological metrics (MorphScore, Boundary F1, etc.)
+- information_theory.py: Information-theoretic analysis
+- tokenization/: Tokenization comparison tools
+- affixes/: Affix coverage analysis
+- datasets/: Dataset comparison tools
+"""
 
 from .morphological_metrics import (
     MorphologicalMetrics,

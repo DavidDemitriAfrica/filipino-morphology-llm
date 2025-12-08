@@ -11,7 +11,7 @@ import random
 from typing import Dict, List, Any, Optional
 import pandas as pd
 
-from .constants import (
+from ...utils.constants import (
     MCQ_LABEL_MAP,
     NUM_MCQ_OPTIONS,
     NUM_INCORRECT_OPTIONS,
@@ -19,7 +19,7 @@ from .constants import (
     MIN_WORD_LENGTH_GENERAL_SYLLABLE_COUNTING,
     STRESS_PRONUNCIATION_MAP
 )
-from .utils import prepare_mcq_outputs, prepare_gen_outputs
+from ...utils.helpers import prepare_mcq_outputs, prepare_gen_outputs
 
 # ============================================================================
 # Helper Functions
@@ -405,7 +405,7 @@ def _apply_frequency_weighting(syllables_df: pd.DataFrame, freq_weight: float, r
     Returns:
         DataFrame with frequency rankings and sampling applied
     """
-    from .sampling import load_frequency_data, add_frequency_ranks, sample_by_frequency
+    from evaluation.utils.sampling import load_frequency_data, add_frequency_ranks, sample_by_frequency
     freq_df = load_frequency_data()
     syllables_df = add_frequency_ranks(syllables_df, freq_df)
     syllables_df = sample_by_frequency(

@@ -73,7 +73,7 @@ Each iteration performs two phases:
 tokenizer = tiktoken.get_encoding("gpt2")
 processor = PatokProcessor(
     tokenizer=tokenizer,
-    affixes_file="data_other/filipino_affixes.txt"
+    affixes_file="data/affixes/filipino_affixes.txt"
 )
 
 # Process tokens

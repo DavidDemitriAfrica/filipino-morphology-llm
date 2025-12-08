@@ -14,26 +14,46 @@ We compare three approaches:
 3. **Patok** (new): Affix-aware expansion with Filipino linguistic guidance
 
 **Models**: GPT-2 (117M) and Gemma 3 1B (1B parameters)  
-**Evaluation**: 2,236 morphological tasks across 5 benchmarks
+**Evaluation**: 13,023 morphological tasks across multiple benchmarks
+
+---
+
+## Quick Start
+
+### Generate Benchmarks
+```bash
+python scripts/generate_all_benchmarks.py
+```
+
+### Evaluate a Model
+```bash
+python scripts/run_benchmark_evaluation.py --models gpt2 --benchmarks pacute
+```
+
+📖 **See [scripts/EVALUATION_README.md](scripts/EVALUATION_README.md) for detailed evaluation guide**
 
 ---
 
 ## What This Repository Contains
 
 ### Evaluation Framework
-- **PACUTE benchmark**: 1,040 tasks testing morphological understanding
-  - Affixation (280 items): Identify and apply Filipino affixes
-  - Composition (280 items): Character counting and word formation
-  - Manipulation (320 items): Character operations (insert, delete, swap)
-  - Syllabification (160 items): Syllable counting and extraction
+- **PACUTE benchmark**: 11,225 tasks (5,845 MCQ + 5,380 Gen) testing morphological understanding
+  - Affixation (280 tasks): Identify and apply Filipino affixes
+  - Composition (3,905 tasks): Character counting, diacritics, word formation
+  - Manipulation (5,120 tasks): Character operations (insert, delete, swap, etc.)
+  - Syllabification (1,280 tasks): Syllable counting, stress, reduplication
 
-- **Hierarchical tasks**: 1,196 tasks across 6 diagnostic levels
+- **Hierarchical tasks**: 1,798 tasks (1,198 MCQ + 600 Gen) across 6 diagnostic levels
   - Level 0: Character recognition
   - Level 1: Character manipulation
   - Level 2: Morpheme decomposition
   - Level 3: Morpheme manipulation
   - Level 4: Morpheme composition
   - Level 5: Complex morphological reasoning
+
+- **LangGame**: 3,000 tasks (2,000 train + 1,000 val) testing subword understanding
+
+- **Multi-Digit Addition**: 3,000 tasks (2,000 train + 1,000 val) testing numerical reasoning
 
 ### Data
 - **Morpheme annotations**: 472 Filipino words with boundary annotations
@@ -299,7 +319,7 @@ This repository builds upon two existing repositories with proper attribution:
 - **Paper**: Sims et al. (2025). "Stochastic Tokenization Improves Subword Understanding"
 
 ### PACUTE (CC0 1.0 Universal)
-- **Source**: Philippine Annotated Corpus for Understanding Tagalog Entities
+- **Source**: Pilipino Affix and Character-Level Understanding of Tokens Evaluation
 - **Components**:
   - Task generation (`src/evaluation/affixation.py`, `composition.py`, `manipulation.py`, `syllabification.py`)
   - Morphological operations (`src/evaluation/string_operations.py`, `syllabification_operations.py`)

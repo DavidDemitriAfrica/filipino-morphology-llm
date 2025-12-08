@@ -1,25 +1,38 @@
 """
-Evaluator class for evaluating models.
+Evaluator class for evaluating models on MCQ benchmarks.
+
+NOTE: This evaluator is for the stochastok training pipeline and requires
+      specific model interfaces (eval_wrapper) that may not be available in all contexts.
 """
 
 import torch
 import tqdm
 
-from evals import eval_wrapper
-from evals.evaluator_interface import EvaluationInterface
-from evals.mcqs.load_benchmarks import load_benchmark
-from evals.metrics import MCQ_METRIC_DICT
+# Legacy imports - these require the stochastok training environment
+# from evals import eval_wrapper
+# from evals.evaluator_interface import EvaluationInterface
+# from evals.mcqs.load_benchmarks import load_benchmark
+# from evals.metrics import MCQ_METRIC_DICT
+
+# Use the new evaluation modules instead:
+from evaluation.loaders import load_benchmark
+from evaluation.metrics import MCQ_METRIC_DICT
 
 
-class MCQEvaluator(EvaluationInterface):
+class MCQEvaluator:
     """
     Base Evaluator class the evaluates models
     and prints/logs the results.
+    
+    NOTE: This evaluator requires a model with specific interface (eval_wrapper)
+          from the stochastok training pipeline.
     """
 
     def __init__(self, model, num_samples=None, benchmarks=None, **kwargs):
         self.model = model
-        self.wrapper = eval_wrapper.EvalWrapper(model)
+        # Import the wrapper (previously eval_wrapper.py, now wrapper.py)
+        from evaluation.evaluators.wrapper import EvalWrapper
+        self.wrapper = EvalWrapper(model)
         self.num_samples = num_samples
         self.benchmarks = benchmarks
         # make sure the model is in eval model

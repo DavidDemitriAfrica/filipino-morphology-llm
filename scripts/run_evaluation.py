@@ -20,7 +20,7 @@ from tqdm import tqdm
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from evaluation.benchmarks.mcqs.load_benchmarks import load_benchmark
+from evaluation.loaders import load_benchmark
 
 
 # Model configurations: (HuggingFace model name, type)

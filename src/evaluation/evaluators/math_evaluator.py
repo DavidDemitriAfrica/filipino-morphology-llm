@@ -1,7 +1,10 @@
 """
-Evaluator class for evaluating models.
+Evaluator class for evaluating models on math generation tasks.
 Question-answering datasets.
 Compares the likelihoods of the question+correct_answer with the likelihoods of the question+incorrect_answer(s).
+
+NOTE: This evaluator is for the stochastok training pipeline and requires
+      specific model interfaces that may not be available in all contexts.
 """
 
 import torch
@@ -10,10 +13,10 @@ import random
 import os
 from datasets import DatasetDict
 
-from evals.evaluator_interface import EvaluationInterface
+# from evals.evaluator_interface import EvaluationInterface
 
 
-class GenerationEvaluatorMath(EvaluationInterface):
+class GenerationEvaluatorMath:
     """
     Base Evaluator class the evaluates models
     and prints/logs the results.

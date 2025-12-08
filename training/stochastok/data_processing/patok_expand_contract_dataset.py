@@ -204,7 +204,7 @@ def prepare_data_expand(
         expand_prop=0.3,
         contract_prop=0.3,
         affix_preference=0.7,
-        affix_file="data_other/filipino_affixes.txt",
+        affix_file="data/affixes/filipino_affixes.txt",
         config=None
         ):
     """
@@ -267,7 +267,7 @@ if __name__ == "__main__":
     parser.add_argument("--expand_prop", default=0.3, type=float, required=False, help="Patok expand proportion hyperparameter.")
     parser.add_argument("--contract_prop", default=0.3, type=float, required=False, help="Patok contract proportion hyperparameter.")
     parser.add_argument("--affix_preference", default=0.7, type=float, required=False, help="Patok affix preference hyperparameter (0-1).")
-    parser.add_argument("--affix_file", default="data_other/filipino_affixes.txt", type=str, required=False, help="Path to affixes file.")
+    parser.add_argument("--affix_file", default="data/affixes/filipino_affixes.txt", type=str, required=False, help="Path to affixes file.")
     parser.add_argument("--config", default=None, type=str, help="HuggingFace config used.")
     args = parser.parse_args()
     print(f"\nArgs: {args}\n")

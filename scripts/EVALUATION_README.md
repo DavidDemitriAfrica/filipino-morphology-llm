@@ -2,27 +2,53 @@
 
 ## Overview
 
-This directory contains scripts for evaluating language models on Filipino morphology and character understanding benchmarks.
+This directory contains scripts for:
+1. **Generating benchmarks**: Create evaluation datasets
+2. **Evaluating models**: Test language models on Filipino morphology tasks
+3. **Analysis**: Diagnose model capabilities and bottlenecks
+
+## Quick Start
+
+### Generate All Benchmarks
+```bash
+python scripts/generate_all_benchmarks.py
+```
+
+This creates all benchmark files in `data/benchmarks/`.
+
+### Evaluate a Model
+```bash
+python scripts/run_benchmark_evaluation.py \
+    --models gpt2 \
+    --benchmarks pacute cute \
+    --max-samples 100
+```
 
 ## Benchmarks
 
-### 1. PACUTE (Philippine Annotated Corpus for Understanding Tagalog Entities)
-- **Total**: 560 tasks across 4 categories
-- **Affixation** (140 tasks): Filipino affix identification and application
-- **Composition** (180 tasks): Character counting and word formation
-- **Manipulation** (160 tasks): Character operations (insert, delete, swap)
-- **Syllabification** (80 tasks): Syllable counting and extraction
+### 1. PACUTE (Pilipino Affix and Character-Level Understanding of Tokens Evaluation)
+- **Total**: 5,845 tasks (MCQ) + 5,380 tasks (Generative) = **11,225 tasks**
+- **Affixation** (280 tasks): Filipino affix identification and application
+- **Composition** (3,905 tasks): Character counting, diacritics, word formation
+- **Manipulation** (5,120 tasks): Character operations (insert, delete, swap, etc.)
+- **Syllabification** (1,280 tasks): Syllable counting, stress, reduplication
 
-### 2. CUTE (Character Understanding Test Evaluation)
-- **Total**: 14,000 tasks across 14 types
-- Character-level: spell, spell_inverse, contains_char, ins_char, del_char, swap_char, sub_char
-- Word-level: contains_word, ins_word, del_word, swap_word, sub_word
-- Semantic/Orthographic: orth, sem
+### 2. Hierarchical Tasks
+- **Total**: 1,198 tasks (MCQ) + 600 tasks (Generative) = **1,798 tasks**
+- **6 Levels**: Character recognition → Complex morphological reasoning
+- Designed to diagnose where models fail in the linguistic hierarchy
 
 ### 3. LangGame (Subword Understanding)
-- Novel subword understanding benchmark
+- **Total**: 3,000 tasks (2,000 train + 1,000 val)
 - 6 question types: most/contains/starts/ends/longest/shortest
 - Tests understanding of token composition
+
+### 4. Multi-Digit Addition
+- **Total**: 3,000 tasks (2,000 train + 1,000 val)
+- 3-digit addition problems
+- Tests numerical reasoning
+
+
 
 ## Models
 
@@ -68,7 +94,37 @@ This directory contains scripts for evaluating language models on Filipino morph
 - **Path Confidence**: Average softmax probability on correct answer
 - **Normalized Accuracy**: Accuracy normalized to account for random chance
 
-## Usage
+## Benchmark Generation
+
+All benchmark generation scripts are in `src/evaluation/datasets/scripts/`:
+
+### Generate All Benchmarks (Recommended)
+```bash
+python scripts/generate_all_benchmarks.py
+```
+
+This runs all individual generation scripts and creates:
+- PACUTE benchmarks (affixation, composition, manipulation, syllabification)
+- Hierarchical benchmarks (6 levels)
+- LangGame dataset
+- Multi-digit addition dataset
+
+### Generate Individual Benchmarks
+```bash
+# PACUTE only
+python src/evaluation/datasets/scripts/generate_pacute_benchmarks.py
+
+# Hierarchical only
+python src/evaluation/datasets/scripts/generate_hierarchical_benchmark.py
+
+# LangGame only
+python src/evaluation/datasets/scripts/generate_langgame_benchmark.py
+
+# Math only
+python src/evaluation/datasets/scripts/generate_math_benchmark.py
+```
+
+## Model Evaluation
 
 ### Quick Test (10 samples)
 ```bash
@@ -78,18 +134,18 @@ python scripts/run_benchmark_evaluation.py \
     --max-samples 10
 ```
 
-### Single Model on All Benchmarks
+### Single Model on Multiple Benchmarks
 ```bash
 python scripts/run_benchmark_evaluation.py \
     --models gpt2 \
-    --benchmarks pacute cute
+    --benchmarks pacute hierarchical
 ```
 
 ### Multiple Models
 ```bash
 python scripts/run_benchmark_evaluation.py \
     --models gpt2 qwen-2.5-0.5b cerebras-gpt-111m \
-    --benchmarks pacute cute
+    --benchmarks pacute hierarchical
 ```
 
 ### Full Evaluation (All Models, All Benchmarks)
@@ -135,6 +191,42 @@ Results are saved as JSON with this structure:
 pip install torch transformers tqdm datasets
 ```
 
+## Evaluation Framework Structure
+
+```
+src/evaluation/
+├── datasets/
+│   ├── generators/          # Benchmark task generators
+│   │   ├── affixation.py
+│   │   ├── composition.py
+│   │   ├── manipulation.py
+│   │   ├── syllabification.py
+│   │   └── hierarchical.py
+│   ├── scripts/             # Generation scripts
+│   │   ├── generate_pacute_benchmarks.py
+│   │   ├── generate_hierarchical_benchmark.py
+│   │   ├── generate_langgame_benchmark.py
+│   │   └── generate_math_benchmark.py
+│   └── converters/          # Format converters
+├── loaders/                 # Benchmark loaders
+│   ├── pacute.py
+│   ├── langgame.py
+│   └── registry.py          # load_benchmark() function
+├── evaluators/              # Model evaluators
+│   ├── hierarchical.py      # HierarchicalAnalyzer
+│   ├── mcq_evaluator.py
+│   └── wrapper.py
+├── metrics/                 # Evaluation metrics
+└── utils/                   # Helper utilities
+    └── sampling.py
+
+scripts/                     # User-facing scripts
+├── generate_all_benchmarks.py  # Master generation script
+├── run_benchmark_evaluation.py # Model evaluation
+├── demo_hierarchical_tasks.py  # Demo usage
+└── evaluate_downstream.py      # Downstream task eval
+```
+
 ## Implementation Details
 
 ### MCQ Evaluation
@@ -143,20 +235,32 @@ pip install torch transformers tqdm datasets
 - The option with highest log probability is selected
 - Metrics are computed by comparing predictions to ground truth
 
+### Generative Evaluation
+- Models generate text given a prompt
+- Answers are compared using exact match, contains match, or prefix match
+- Used for hierarchical tasks in generative format
+
 ### Model Loading
 - Models are loaded from HuggingFace using `AutoModelForCausalLM`
 - FP16 precision is used on GPU for efficiency
 - Models run in evaluation mode (no dropout)
 
-### Benchmarks
-- PACUTE: Filipino-specific morphology tasks (MCQ format)
-- CUTE: English character understanding (generative format, adapted to MCQ)
-- LangGame: Subword understanding (MCQ format)
+### Benchmark Loaders
+All benchmarks can be loaded using the unified interface:
+```python
+from evaluation.loaders import load_benchmark
+
+# Returns generator: (prefix, ground_truth, false_options)
+loader = load_benchmark("pacute")
+for prefix, gt, false_opts in loader:
+    # Evaluate...
+```
+
+Available benchmarks: `pacute`, `affixation`, `composition`, `manipulation`, 
+`syllabification`, `hierarchical`, `langgame-train`, `langgame-val`, 
+`multi_digit_addition-train`, `multi_digit_addition-val`
 
 ## Notes
-
-### LangGame Data
-LangGame requires pre-generated data files in `data/data_as_datasets/langgame/`. If not available, you can:
 1. Generate using StochasTok data generation scripts
 2. Download from the StochasTok repository
 3. Skip LangGame and evaluate on PACUTE and CUTE only

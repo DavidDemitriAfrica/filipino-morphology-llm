@@ -3,14 +3,14 @@ Load a benchmark loader, given the benchmark name.
 """
 from functools import partial
 
-from evaluation.benchmarks.mcqs.benchmarks.arc import load_arc
-from evaluation.benchmarks.mcqs.benchmarks.blimp import load_blimp
-from evaluation.benchmarks.mcqs.benchmarks.hellaswag import load_hellaswag
-from evaluation.benchmarks.mcqs.benchmarks.mmlu import load_mmlu
-from evaluation.benchmarks.mcqs.benchmarks.winogrande import load_winogrande
-from evaluation.benchmarks.mcqs.benchmarks.langgame import load_langgame
-from evaluation.benchmarks.mcqs.benchmarks.cute import load_cute
-from evaluation.benchmarks.mcqs.benchmarks.pacute import load_pacute
+from evaluation.loaders.arc import load_arc
+from evaluation.loaders.blimp import load_blimp
+from evaluation.loaders.hellaswag import load_hellaswag
+from evaluation.loaders.mmlu import load_mmlu
+from evaluation.loaders.winogrande import load_winogrande
+from evaluation.loaders.langgame import load_langgame
+from evaluation.loaders.cute import load_cute
+from evaluation.loaders.pacute import load_pacute
 
 EVALS_DICT = {
     "arc": partial(load_arc, split="test"),

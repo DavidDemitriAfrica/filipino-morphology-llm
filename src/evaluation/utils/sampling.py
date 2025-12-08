@@ -16,7 +16,7 @@ from .constants import (
     DEFAULT_FREQ_WEIGHT,
     DEFAULT_RANDOM_STATE
 )
-from .utils import validate_dataframe_columns, validate_positive_integer, validate_probability
+from .helpers import validate_dataframe_columns, validate_positive_integer, validate_probability
 
 
 def load_frequency_data(freq_file_path: str = DEFAULT_FREQUENCY_FILE) -> pd.DataFrame:

@@ -10,18 +10,18 @@ Supports both multiple-choice questions (MCQ) and generative (GEN) formats.
 import random
 from typing import Dict, List, Any, Optional, Tuple, Callable
 import pandas as pd
-from .string_operations import (
+from ...utils.strings import (
     string_to_chars, chars_to_string, get_random_char,
     delete_char, insert_char, substitute_char, permute_char, duplicate_char,
     normalize_diacritic, diacritize, randomly_diacritize, same_string
 )
-from .constants import (
+from ...utils.constants import (
     MCQ_LABEL_MAP,
     NUM_MCQ_OPTIONS,
     NUM_INCORRECT_OPTIONS,
     MIN_WORD_LENGTH_MANIPULATION
 )
-from .utils import prepare_mcq_outputs, prepare_gen_outputs
+from ...utils.helpers import prepare_mcq_outputs, prepare_gen_outputs
 
 # Manipulation function mappings
 MANIPULATIONS: Dict[str, Callable] = {
@@ -100,6 +100,9 @@ def apply_manipulation_incorrectly(
         char2 = kwargs["char2"]
         remaining_chars = string.replace(char1, '')
         remaining_chars = remaining_chars.replace(char2, '')
+        # Fallback to alphabet if no characters left in string
+        if not remaining_chars:
+            remaining_chars = 'abcdefghijklmnopqrstuvwxyz'.replace(char1, '').replace(char2, '')
         incorrect_char2 = get_random_char(remaining_chars)
         return permute_char(string, char1=char1, char2=incorrect_char2)
     elif target_manipulation == "duplication" and "char_to_duplicate" in kwargs:
@@ -173,7 +176,7 @@ def diacritize_string(string: str, correct_string: str) -> List[str]:
     # If correct answer accidentally included, replace it
     if correct_string in results:
         results.remove(correct_string)
-        from .string_operations import shuffle_chars
+        from ...utils.strings import shuffle_chars
         results.append(chars_to_string(shuffle_chars(string_to_chars(correct_string))))
     
     return results
@@ -530,7 +533,7 @@ def _apply_frequency_weighting(syllables_df: pd.DataFrame, freq_weight: float, r
     Returns:
         DataFrame with frequency rankings and sampling applied
     """
-    from .sampling import load_frequency_data, add_frequency_ranks, sample_by_frequency
+    from evaluation.utils.sampling import load_frequency_data, add_frequency_ranks, sample_by_frequency
     freq_df = load_frequency_data()
     syllables_df = add_frequency_ranks(syllables_df, freq_df)
     syllables_df = sample_by_frequency(
