@@ -1,0 +1,59 @@
+#!/bin/bash
+#PBS -N build_tokenizer_expansions
+#PBS -q AISG_debug
+#PBS -l select=1:ncpus=4:mem=32gb
+#PBS -l walltime=08:00:00
+#PBS -j oe
+#PBS -o /scratch_aisg/SPEC-SF-AISG/railey/logs/
+
+# Load environment variables
+cd /scratch_aisg/SPEC-SF-AISG/railey/filipino-morphology-llm
+source .env
+
+# Activate conda environment
+source env/bin/activate
+
+# Check for required parameter
+if [ -z "$TOKENIZER_NAME" ]; then
+    echo "Error: TOKENIZER_NAME not set"
+    echo "Usage: qsub -v TOKENIZER_NAME=gpt2 jobs/build_tokenizer_expansions.pbs"
+    echo "   or: qsub -v TOKENIZER_NAME=google/gemma-3-1b-pt jobs/build_tokenizer_expansions.pbs"
+    exit 1
+fi
+
+echo "================================================================"
+echo "Building Tokenizer Expansions"
+echo "================================================================"
+echo "Tokenizer: $TOKENIZER_NAME"
+echo "Start time: $(date)"
+echo "================================================================"
+
+# Build the expansions
+python3 << EOF
+import sys
+import os
+sys.path.insert(0, 'src')
+
+from transformers import AutoTokenizer
+from tokenization import StochastokProcessor
+
+tokenizer_name = "$TOKENIZER_NAME"
+print(f"Loading tokenizer: {tokenizer_name}")
+tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+print(f"✓ Loaded tokenizer: {type(tokenizer).__name__}")
+print(f"  Vocab size: {tokenizer.vocab_size}")
+print()
+
+print("Building tokenizer expansions...")
+print("(This may take several hours for large vocabularies)")
+processor = StochastokProcessor(tokenizer, expand_prop=0.1)
+print()
+print(f"✓ Expansions built and saved!")
+print(f"  Number of expansions: {len(processor.expansions)}")
+print(f"  Tokenizer name: {processor.tokenizer_name}")
+EOF
+
+echo "================================================================"
+echo "Completed!"
+echo "End time: $(date)"
+echo "================================================================"
