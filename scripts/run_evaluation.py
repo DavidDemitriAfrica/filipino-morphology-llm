@@ -495,7 +495,7 @@ def main():
         'langgame': 'mcq',
         'langgame-mcq': 'mcq',
         'langgame-gen': 'gen',
-        'multi-digit-addition': 'gen',
+        'multi-digit-addition': 'mcq',
         'multi-digit-addition-gen': 'gen',
         'multi-digit-addition-mcq': 'mcq',
     }
