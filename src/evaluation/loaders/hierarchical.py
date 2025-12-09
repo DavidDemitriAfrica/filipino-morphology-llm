@@ -43,7 +43,8 @@ def load_hierarchical(format="mcq", **kwargs):
     
     for i in indices:
         task = tasks[i]
-        prefix = task["question"]
+        # Hierarchical benchmark uses 'prompt_tl' for Tagalog prompts
+        prefix = task.get("prompt_tl", task.get("question", ""))
         sample_id = task.get("id", f"hierarchical_{format}_{i:05d}")
         
         if format == "mcq":
