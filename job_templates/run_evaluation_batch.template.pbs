@@ -1,0 +1,230 @@
+#!/bin/bash
+
+#PBS -N eval_launcher
+#PBS -l select=1:ncpus=1
+#PBS -l walltime=00:10:00
+#PBS -q YOUR_QUEUE_NAME
+#PBS -j oe
+#PBS -o /path/to/your/logs/
+
+# ============================================================================
+# PBS Job Launcher for Parallel Benchmark Evaluation - TEMPLATE
+# ============================================================================
+#
+# This is a TEMPLATE file. Copy it to run_evaluation_batch.pbs and customize:
+#   1. Replace YOUR_QUEUE_NAME with your cluster queue
+#   2. Replace /path/to/your/logs/ with your actual log directory
+#   3. Replace /path/to/your/project with your project directory
+#
+# This script submits SEPARATE PBS jobs for each model group.
+# Each job gets its own GPU and runs in parallel - much faster!
+#
+# Usage:
+#   cp job_templates/run_evaluation_batch.template.pbs jobs/run_evaluation_batch.pbs
+#   # Edit run_evaluation_batch.pbs with your paths
+#   qsub jobs/run_evaluation_batch.pbs
+#
+# To customize benchmarks:
+#   qsub -v BENCHMARKS="pacute cute" jobs/run_evaluation_batch.pbs
+#
+# To limit samples for testing:
+#   qsub -v MAX_SAMPLES=100 jobs/run_evaluation_batch.pbs
+#
+# ============================================================================
+
+set -euo pipefail
+
+# ============================================================================
+# Setup Environment
+# ============================================================================
+
+export JOB_WORK_DIR=${PBS_O_WORKDIR}
+export JOB_ID=${PBS_JOBID}
+export JOB_NAME=${PBS_JOBNAME}
+
+cd ${JOB_WORK_DIR}
+
+# Load conda environment
+if [ -f "${JOB_WORK_DIR}/env/bin/activate" ]; then
+    echo "Activating conda environment..."
+    source "${JOB_WORK_DIR}/env/bin/activate"
+else
+    echo "Warning: Conda environment not found at ${JOB_WORK_DIR}/env"
+    echo "Please create the environment first: conda create -p env python=3.11"
+    exit 1
+fi
+
+# ============================================================================
+# Directory Setup
+# ============================================================================
+
+# CUSTOMIZE: Set your log directory path
+export LOG_DIR="/path/to/your/logs/evaluation/${JOB_ID}"
+export OUTPUT_DIR="${OUTPUT_DIR:-${JOB_WORK_DIR}/results/benchmark_evaluation}"
+
+mkdir -p ${LOG_DIR}
+mkdir -p ${OUTPUT_DIR}
+
+# ============================================================================
+# Evaluation Configuration
+# ============================================================================
+
+# Can be overridden via qsub -v
+export MAX_SAMPLES="${MAX_SAMPLES:-}"  # Empty means all samples
+export DEVICE="${DEVICE:-cuda}"
+
+# Default model groups (can be overridden)
+MODELS_GPT2="${MODELS_GPT2:-gpt2 gpt2-medium gpt2-large}"
+MODELS_QWEN="${MODELS_QWEN:-qwen-2.5-0.5b qwen-2.5-0.5b-it qwen-2.5-1.5b qwen-2.5-1.5b-it}"
+MODELS_CEREBRAS="${MODELS_CEREBRAS:-cerebras-gpt-111m cerebras-gpt-256m cerebras-gpt-590m}"
+MODELS_LLAMA="${MODELS_LLAMA:-llama-3.2-1b llama-3.2-1b-it}"
+MODELS_GEMMA="${MODELS_GEMMA:-gemma-2b gemma-2b-it}"
+
+# Benchmarks to run (can be overridden)
+BENCHMARKS="${BENCHMARKS:-pacute cute hierarchical langgame math}"
+
+# ============================================================================
+# Print Configuration
+# ============================================================================
+
+echo "============================================================================"
+echo "Batch Evaluation Configuration"
+echo "============================================================================"
+echo "Job ID: ${JOB_ID}"
+echo "Job Name: ${JOB_NAME}"
+echo "Working Directory: ${JOB_WORK_DIR}"
+echo ""
+echo "Models:"
+echo "  GPT-2: ${MODELS_GPT2}"
+echo "  Qwen: ${MODELS_QWEN}"
+echo "  Cerebras: ${MODELS_CEREBRAS}"
+echo "  Llama: ${MODELS_LLAMA}"
+echo "  Gemma: ${MODELS_GEMMA}"
+echo ""
+echo "Benchmarks: ${BENCHMARKS}"
+echo "Max Samples: ${MAX_SAMPLES:-all}"
+echo "Device: ${DEVICE}"
+echo ""
+echo "Output Directory: ${OUTPUT_DIR}"
+echo "Log Directory: ${LOG_DIR}"
+echo "============================================================================"
+echo ""
+
+# ============================================================================
+# Helper Function to Submit Individual Evaluation Job
+# ============================================================================
+
+submit_eval_job() {
+    local model_group=$1
+    local models=$2
+    
+    echo ""
+    echo "Submitting job for: ${model_group}"
+    echo "Models: ${models}"
+    
+    # Create individual job script
+    local job_script="${LOG_DIR}/eval_${model_group}.pbs"
+    
+    cat > ${job_script} << 'EOFSCRIPT'
+#!/bin/bash
+#PBS -N eval_MODEL_GROUP
+#PBS -l select=1:ncpus=8:ngpus=1
+#PBS -l walltime=08:00:00
+#PBS -q YOUR_QUEUE_NAME
+#PBS -j oe
+#PBS -o /path/to/your/logs/
+
+set -euo pipefail
+
+cd WORK_DIR
+
+# Activate environment
+source env/bin/activate
+
+echo "============================================================================"
+echo "Evaluating: MODEL_GROUP"
+echo "Models: MODELS"
+echo "Benchmarks: BENCHMARKS"
+echo "============================================================================"
+
+# Run evaluation
+python scripts/run_evaluation.py \
+    --models MODELS \
+    --benchmarks BENCHMARKS \
+    --output-dir OUTPUT_DIR \
+    --device cuda MAX_SAMPLES_FLAG
+
+exit_code=$?
+
+if [ ${exit_code} -eq 0 ]; then
+    echo "✓ MODEL_GROUP completed successfully"
+else
+    echo "✗ MODEL_GROUP failed with exit code ${exit_code}"
+fi
+
+exit ${exit_code}
+EOFSCRIPT
+
+    # Replace placeholders
+    sed -i "s|MODEL_GROUP|${model_group}|g" ${job_script}
+    sed -i "s|WORK_DIR|${JOB_WORK_DIR}|g" ${job_script}
+    sed -i "s|MODELS|${models}|g" ${job_script}
+    sed -i "s|BENCHMARKS|${BENCHMARKS}|g" ${job_script}
+    sed -i "s|OUTPUT_DIR|${OUTPUT_DIR}|g" ${job_script}
+    sed -i "s|YOUR_QUEUE_NAME|YOUR_QUEUE_NAME|g" ${job_script}
+    sed -i "s|/path/to/your/logs/|/path/to/your/logs/|g" ${job_script}
+    
+    if [ -n "${MAX_SAMPLES}" ]; then
+        sed -i "s|MAX_SAMPLES_FLAG|--max-samples ${MAX_SAMPLES}|g" ${job_script}
+    else
+        sed -i "s|MAX_SAMPLES_FLAG||g" ${job_script}
+    fi
+    
+    # Submit job
+    local job_id=$(qsub ${job_script})
+    echo "  → Submitted as job: ${job_id}"
+    
+    # Store job ID for tracking
+    echo "${job_id} ${model_group}" >> ${LOG_DIR}/submitted_jobs.txt
+}
+
+# ============================================================================
+# Submit All Evaluation Jobs
+# ============================================================================
+
+echo "Submitting parallel evaluation jobs..."
+echo ""
+
+# Initialize tracking file
+echo "# Job submissions for ${JOB_ID}" > ${LOG_DIR}/submitted_jobs.txt
+
+# Submit jobs for each model group
+submit_eval_job "gpt2" "${MODELS_GPT2}"
+submit_eval_job "qwen" "${MODELS_QWEN}"
+submit_eval_job "cerebras" "${MODELS_CEREBRAS}"
+submit_eval_job "llama" "${MODELS_LLAMA}"
+submit_eval_job "gemma" "${MODELS_GEMMA}"
+
+# ============================================================================
+# Summary
+# ============================================================================
+
+echo ""
+echo "============================================================================"
+echo "Job Submission Complete"
+echo "============================================================================"
+echo "Submitted 5 parallel evaluation jobs"
+echo ""
+echo "Track progress:"
+echo "  qstat -u \$USER"
+echo ""
+echo "View specific logs:"
+echo "  tail -f /path/to/your/logs/<JOB_ID>.OU"
+echo ""
+echo "Check submitted jobs:"
+echo "  cat ${LOG_DIR}/submitted_jobs.txt"
+echo ""
+echo "Results will be saved to: ${OUTPUT_DIR}"
+echo "============================================================================"
+
+exit 0

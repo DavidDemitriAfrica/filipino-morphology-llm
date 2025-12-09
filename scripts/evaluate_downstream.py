@@ -4,7 +4,7 @@ Evaluate LLM on downstream tasks: CUTE, PACUTE, LangGame
 Usage:
     python scripts/evaluate_downstream.py --model gpt2 --benchmark cute
     python scripts/evaluate_downstream.py --model gpt2 --benchmark pacute
-    python scripts/evaluate_downstream.py --model gpt2 --benchmark langgame-val
+    python scripts/evaluate_downstream.py --model gpt2 --benchmark langgame
 """
 import argparse
 import json
@@ -20,7 +20,7 @@ def evaluate_benchmark(benchmark_name, model_name="gpt2", max_samples=None):
     Evaluate a model on a benchmark.
 
     Args:
-        benchmark_name: Name of benchmark (cute, pacute, langgame-val, etc.)
+        benchmark_name: Name of benchmark (cute, pacute, langgame, etc.)
         model_name: Model to evaluate (for now just prints tasks)
         max_samples: Maximum number of samples to evaluate (None = all)
     """
@@ -29,22 +29,22 @@ def evaluate_benchmark(benchmark_name, model_name="gpt2", max_samples=None):
     print("=" * 80)
 
     # Load appropriate benchmark
-    if benchmark_name == "cute":
-        from evaluation.benchmarks.mcqs.benchmarks.cute import load_cute
-        loader = load_cute()
-    elif benchmark_name == "pacute":
-        from evaluation.benchmarks.mcqs.benchmarks.pacute import load_pacute
-        loader = load_pacute()
-    elif benchmark_name.startswith("pacute-"):
-        from evaluation.benchmarks.mcqs.benchmarks.pacute import load_pacute
-        category = benchmark_name.split("-")[1]
-        loader = load_pacute(categories=[category])
-    elif benchmark_name.startswith("langgame"):
-        from evaluation.benchmarks.mcqs.benchmarks.langgame import load_langgame
-        split = benchmark_name.split("-")[1] if "-" in benchmark_name else "val"
-        loader = load_langgame(split=split)
-    else:
-        raise ValueError(f"Unknown benchmark: {benchmark_name}")
+    from evaluation.loaders import load_benchmark
+    
+    try:
+        loader = load_benchmark(benchmark_name)
+    except KeyError:
+        # Try with more specific format
+        if benchmark_name.startswith("pacute-"):
+            category = benchmark_name.split("-")[1]
+            from evaluation.loaders.pacute import load_pacute
+            loader = load_pacute(categories=[category])
+        elif benchmark_name.startswith("langgame"):
+            split = benchmark_name.split("-")[1] if "-" in benchmark_name else "val"
+            from evaluation.loaders.langgame import load_langgame
+            loader = load_langgame(split=split)
+        else:
+            raise ValueError(f"Unknown benchmark: {benchmark_name}")
 
     # Collect tasks
     tasks = []
@@ -84,7 +84,7 @@ def main():
     parser.add_argument("--benchmark", type=str, required=True,
                        choices=["cute", "pacute", "pacute-affixation", "pacute-composition",
                                "pacute-manipulation", "pacute-syllabification",
-                               "langgame-train", "langgame-val"],
+                               "langgame", "langgame-mcq", "langgame-gen"],
                        help="Benchmark to evaluate on")
     parser.add_argument("--model", type=str, default="gpt2",
                        help="Model name (for logging)")
