@@ -205,9 +205,9 @@ def main():
     # Generate all benchmarks
     results = {
         "Affixation": generate_affixation_benchmarks(str(output_dir)),
-        "Composition": generate_composition_benchmarks(str(output_dir), num_samples=280),
-        "Manipulation": generate_manipulation_benchmarks(str(output_dir), num_samples=320),
-        "Syllabification": generate_syllabification_benchmarks(str(output_dir), num_samples=160),
+        "Composition": generate_composition_benchmarks(str(output_dir), num_samples=100),
+        "Manipulation": generate_manipulation_benchmarks(str(output_dir), num_samples=100),
+        "Syllabification": generate_syllabification_benchmarks(str(output_dir), num_samples=100),
     }
     
     # Summary

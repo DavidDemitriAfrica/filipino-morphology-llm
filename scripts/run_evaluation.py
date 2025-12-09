@@ -393,7 +393,7 @@ def main():
     parser.add_argument(
         "--benchmarks",
         nargs="+",
-        default=["cute", "pacute"],
+        default=["pacute", "cute", "langgame-val"],
         help="Benchmarks to evaluate on"
     )
     parser.add_argument(
@@ -475,6 +475,28 @@ def main():
                 'benchmarks': model_results
             }
 
+            # Save results for this model
+            model_output_dir = os.path.join("results", model_name)
+            os.makedirs(model_output_dir, exist_ok=True)
+            model_output_file = os.path.join(
+                model_output_dir,
+                f"evaluation_results_{timestamp}.json"
+            )
+            
+            model_result = {
+                'hf_model_name': hf_model_name,
+                'model_type': model_type,
+                'benchmarks': model_results,
+                'timestamp': timestamp
+            }
+            
+            with open(model_output_file, 'w') as f:
+                json.dump(model_result, f, indent=2)
+            
+            print(f"\n{'='*80}")
+            print(f"Results for {model_name} saved to: {model_output_file}")
+            print(f"{'='*80}")
+
             # Clean up GPU memory
             del evaluator
             torch.cuda.empty_cache()
@@ -485,18 +507,20 @@ def main():
             traceback.print_exc()
             continue
 
-    # Save results
-    output_file = os.path.join(
-        args.output_dir,
-        f"evaluation_results_{timestamp}.json"
-    )
+    # Save combined results (for backwards compatibility)
+    if args.output_dir:
+        output_file = os.path.join(
+            args.output_dir,
+            f"evaluation_results_{timestamp}.json"
+        )
+        os.makedirs(args.output_dir, exist_ok=True)
 
-    with open(output_file, 'w') as f:
-        json.dump(all_results, f, indent=2)
+        with open(output_file, 'w') as f:
+            json.dump(all_results, f, indent=2)
 
-    print(f"\n{'='*80}")
-    print(f"Results saved to: {output_file}")
-    print(f"{'='*80}")
+        print(f"\n{'='*80}")
+        print(f"Combined results saved to: {output_file}")
+        print(f"{'='*80}")
 
     # Print summary table
     print("\nSummary Table:")

@@ -296,7 +296,7 @@ def create_deaccent_task(
 def generate_stress_benchmark(
     syllables_file: str,
     output_file: str,
-    n_per_task: int = 50,
+    n_per_task: int = 100,
     format: str = "mcq"
 ):
     """
@@ -353,13 +353,13 @@ if __name__ == '__main__':
     generate_stress_benchmark(
         syllables_file='data/corpora/pacute_data/syllables.jsonl',
         output_file='data/benchmarks/stress_mcq.jsonl',
-        n_per_task=50,
+        n_per_task=100,
         format='mcq'
     )
 
     generate_stress_benchmark(
         syllables_file='data/corpora/pacute_data/syllables.jsonl',
         output_file='data/benchmarks/stress_gen.jsonl',
-        n_per_task=50,
+        n_per_task=100,
         format='gen'
     )

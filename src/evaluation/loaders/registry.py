@@ -11,6 +11,7 @@ from evaluation.loaders.winogrande import load_winogrande
 from evaluation.loaders.langgame import load_langgame
 from evaluation.loaders.cute import load_cute
 from evaluation.loaders.pacute import load_pacute
+from evaluation.loaders.multi_digit_addition import load_multi_digit_addition
 
 EVALS_DICT = {
     "arc": partial(load_arc, split="test"),
@@ -20,7 +21,8 @@ EVALS_DICT = {
     "blimp": partial(load_blimp, split="test"),
     "langgame-train": partial(load_langgame, split="train"),
     "langgame-val": partial(load_langgame, split="val"),
-    "cute": partial(load_cute, split="test"),
+    "cute": partial(load_cute, split="test", max_per_task=100),  # Subsample to 100 per task (1400 total)
+    "multi-digit-addition": partial(load_multi_digit_addition, split="val", max_samples=1000),
     "pacute": partial(load_pacute, split="test"),
     "pacute-affixation": partial(load_pacute, split="test", categories=["affixation"]),
     "pacute-composition": partial(load_pacute, split="test", categories=["composition"]),

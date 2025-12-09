@@ -16,7 +16,7 @@ Dataset: https://huggingface.co/datasets/leukas/cute
 import random
 
 
-def load_cute(split="test", task_types=None, **kwargs):
+def load_cute(split="test", task_types=None, max_per_task=100, **kwargs):
     """
     Load CUTE benchmark from HuggingFace.
 
@@ -27,6 +27,7 @@ def load_cute(split="test", task_types=None, **kwargs):
                     'orth', 'sem', 'ins_char', 'ins_word', 'del_char', 'del_word',
                     'sub_char', 'sub_word', 'swap_char', 'swap_word']
                    If None, loads all task types.
+        max_per_task: Maximum number of examples per task type (default: 100)
 
     Yields:
         For MCQ format compatibility:
@@ -65,7 +66,13 @@ def load_cute(split="test", task_types=None, **kwargs):
     tasks = []
     for task_type in all_task_types:
         if task_type in dataset and (task_types is None or task_type in task_types):
-            for item in dataset[task_type]:
+            task_items = list(dataset[task_type])
+            # Subsample if max_per_task is set
+            if max_per_task is not None and len(task_items) > max_per_task:
+                random.shuffle(task_items)
+                task_items = task_items[:max_per_task]
+            
+            for item in task_items:
                 tasks.append({
                     'prompt': item['prompt'],
                     'answer': item['answer'],
@@ -73,7 +80,8 @@ def load_cute(split="test", task_types=None, **kwargs):
                 })
 
     total = len(tasks)
-    print(f"CUTE: Loaded {total} character understanding tasks from HuggingFace.")
+    num_tasks = len([t for t in all_task_types if t in dataset and (task_types is None or t in task_types)])
+    print(f"CUTE: Loaded {total} character understanding tasks from HuggingFace ({num_tasks} task types, max {max_per_task} per task).")
     print(f"Note: CUTE is a generative benchmark (prompt → answer), not MCQ format.")
 
     # Shuffle tasks
