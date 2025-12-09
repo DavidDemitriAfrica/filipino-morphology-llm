@@ -43,6 +43,7 @@ def load_multi_digit_addition(format="gen", max_samples=1000, **kwargs):
     for i in indices:
         sample = samples[i]
         prefix = sample["question"]
+        sample_id = sample.get("id", f"multi_digit_addition_{format}_{i:05d}")
         
         if format == "mcq":
             options = sample["options"]
@@ -52,4 +53,4 @@ def load_multi_digit_addition(format="gen", max_samples=1000, **kwargs):
             ground_truth = sample["answer"]
             false_options = []
         
-        yield prefix, ground_truth, false_options
+        yield prefix, ground_truth, false_options, sample_id

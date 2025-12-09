@@ -15,7 +15,6 @@ This document describes the format (MCQ vs GEN) for each benchmark and their cor
 | | | | composition_mcq.jsonl, composition_gen.jsonl | 900/500 |
 | | | | manipulation_mcq.jsonl, manipulation_gen.jsonl | 800 |
 | | | | syllabification_mcq.jsonl, syllabification_gen.jsonl | 400 |
-| **Hierarchical** | ✓ | ✓ | hierarchical_mcq.jsonl, hierarchical_gen.jsonl | 600/598 |
 | **CUTE** | ✗ | ✓ | cute_gen.jsonl | 1,400 (100 per task × 14) |
 | **LangGame** | ✓ | ✓ | langgame_mcq.jsonl, langgame_gen.jsonl | 1,000 |
 | **Multi-digit Addition** | ✓ | ✓ | multi_digit_addition_mcq.jsonl, multi_digit_addition_gen.jsonl | 1,000 |
@@ -75,10 +74,6 @@ Use these keys with `load_benchmark()`:
 - `pacute-syllabification` or `pacute-syllabification-mcq` - Syllabification, MCQ
 - `pacute-syllabification-gen` - Syllabification, GEN
 
-### Hierarchical
-- `hierarchical` or `hierarchical-mcq` - MCQ format (default, 600 samples)
-- `hierarchical-gen` - GEN format (598 samples)
-
 ### CUTE
 - `cute` or `cute-gen` - Generative format (1,400 samples)
 
@@ -96,8 +91,6 @@ When running `python scripts/run_evaluation.py` without specifying benchmarks, t
 1. `pacute` - 2,240 samples (MCQ)
 2. `cute` - 1,400 samples (GEN)
 3. `langgame` - 1,000 samples (MCQ)
-
-Note: Hierarchical benchmark is available but not in the default set. Add it with `--benchmarks pacute cute langgame hierarchical`
 
 ## Subsampling
 

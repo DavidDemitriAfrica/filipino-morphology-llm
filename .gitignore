@@ -105,5 +105,6 @@ container_cache/
 # NVIDIA NeMo experiment outputs
 nemo_experiments/
 
-# Results
-results/benchmark_evaluation/*
+# Results - ignore all subfolders and files but keep the results/ directory itself
+results/*/
+results/*.json

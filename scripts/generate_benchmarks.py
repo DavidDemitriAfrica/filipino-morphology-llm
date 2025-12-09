@@ -9,12 +9,15 @@ Generates all benchmark datasets for evaluation:
 4. LangGame Dataset (language reasoning tasks)
 5. Multi-digit Addition Dataset (mathematical reasoning)
 
+After generation, automatically adds unique IDs to all benchmark samples.
+
 Usage:
     python scripts/generate_benchmarks.py
     python scripts/generate_benchmarks.py --benchmarks pacute hierarchical cute
 """
 
 import sys
+import json
 import argparse
 from pathlib import Path
 
@@ -95,6 +98,64 @@ def generate_cute():
         print()
 
 
+def add_ids_to_benchmarks():
+    """Add unique IDs to all benchmark files."""
+    print("=" * 80)
+    print("Adding IDs to Benchmark Files")
+    print("=" * 80)
+    print()
+    
+    benchmarks_dir = Path("data/benchmarks")
+    
+    if not benchmarks_dir.exists():
+        print(f"Warning: {benchmarks_dir} not found")
+        return
+    
+    jsonl_files = sorted(benchmarks_dir.glob("*.jsonl"))
+    
+    for filepath in jsonl_files:
+        try:
+            # Parse filename to get benchmark name and format
+            filename = filepath.stem  # e.g., "langgame_mcq"
+            parts = filename.rsplit('_', 1)
+            if len(parts) == 2:
+                benchmark_name, format_type = parts
+            else:
+                benchmark_name = filename
+                format_type = "unknown"
+            
+            # Read all samples
+            samples = []
+            with open(filepath, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if line.strip():
+                        samples.append(json.loads(line.strip()))
+            
+            # Check if IDs already exist
+            has_ids = all('id' in sample for sample in samples)
+            if has_ids:
+                print(f"  ✓ {filepath.name} - Already has IDs")
+                continue
+            
+            # Add IDs
+            updated_samples = []
+            for idx, sample in enumerate(samples):
+                sample['id'] = f"{benchmark_name}_{format_type}_{idx:05d}"
+                updated_samples.append(sample)
+            
+            # Write back
+            with open(filepath, 'w', encoding='utf-8') as f:
+                for sample in updated_samples:
+                    f.write(json.dumps(sample, ensure_ascii=False) + '\n')
+            
+            print(f"  ✓ {filepath.name} - Added {len(updated_samples)} IDs")
+            
+        except Exception as e:
+            print(f"  ✗ {filepath.name} - Error: {e}")
+    
+    print()
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generate all evaluation benchmarks",
@@ -170,6 +231,14 @@ def main():
             print(f"Failed to generate CUTE: {e}")
             print()
             fail_count += 1
+    
+    # Add IDs to all benchmark files
+    if success_count > 0:
+        try:
+            add_ids_to_benchmarks()
+        except Exception as e:
+            print(f"Warning: Failed to add IDs to benchmarks: {e}")
+            print()
     
     # Summary
     print("=" * 80)

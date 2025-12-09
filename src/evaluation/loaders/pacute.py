@@ -72,6 +72,7 @@ def load_pacute(split="test", categories=None, **kwargs):
         # Get the English prompt
         prompt_data = task["prompts"][0]
         prefix = prompt_data["text_en"]
+        sample_id = task.get("id", f"pacute_mcq_{i:05d}")
 
         # Extract options
         mcq_options = prompt_data["mcq_options"]
@@ -82,4 +83,4 @@ def load_pacute(split="test", categories=None, **kwargs):
             mcq_options["incorrect3"]
         ]
 
-        yield prefix, ground_truth, false_options
+        yield prefix, ground_truth, false_options, sample_id

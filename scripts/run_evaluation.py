@@ -241,7 +241,8 @@ class HuggingFaceEvaluator:
             benchmark_items.append(item)
             if i == 0:
                 first_item = item
-                prefix, ground_truth, false_options = item
+                # Unpack 4 values: prefix, ground_truth, false_options, sample_id
+                prefix, ground_truth, false_options, sample_id = item
                 # Generative format has empty false_options
                 is_generative = len(false_options) == 0
                 format_type = "generative" if is_generative else "MCQ"
@@ -264,17 +265,35 @@ class HuggingFaceEvaluator:
         confidences = []
         correct_count = 0
         total_count = 0
+        detailed_results = []
 
-        for prefix, ground_truth, false_options in tqdm(benchmark_items, desc=benchmark_name):
+        for item_data in tqdm(benchmark_items, desc=benchmark_name):
+            prefix, ground_truth, false_options, sample_id = item_data
+            
             # Evaluate
             logprobs = self.evaluate_mcq(prefix, ground_truth, false_options)
             confidences.append(logprobs)
 
             # Check if correct
             predicted_idx = torch.argmax(logprobs).item()
-            if predicted_idx == 0:
+            is_correct = predicted_idx == 0
+            if is_correct:
                 correct_count += 1
             total_count += 1
+            
+            # Store detailed result
+            all_options = [ground_truth] + false_options
+            detailed_result = {
+                'id': sample_id,
+                'question': prefix,
+                'ground_truth': ground_truth,
+                'options': all_options,
+                'predicted_idx': predicted_idx,
+                'predicted_answer': all_options[predicted_idx] if predicted_idx < len(all_options) else None,
+                'is_correct': is_correct,
+                'logprobs': logprobs.tolist(),
+            }
+            detailed_results.append(detailed_result)
 
         if total_count == 0:
             print(f"No samples evaluated for {benchmark_name}")
@@ -293,6 +312,7 @@ class HuggingFaceEvaluator:
         results = self.calculate_metrics(confidences_tensor)
         results['num_samples'] = total_count
         results['format'] = 'mcq'
+        results['detailed_results'] = detailed_results
 
         return results
 
@@ -302,8 +322,11 @@ class HuggingFaceEvaluator:
         contains_matches = 0
         prefix_matches = 0
         total_count = 0
+        detailed_results = []
 
-        for prefix, ground_truth, _ in tqdm(benchmark_items, desc=benchmark_name):
+        for item_data in tqdm(benchmark_items, desc=benchmark_name):
+            prefix, ground_truth, _, sample_id = item_data
+            
             # Evaluate
             result = self.evaluate_generative(prefix, ground_truth)
 
@@ -315,6 +338,18 @@ class HuggingFaceEvaluator:
             if result['prefix_match']:
                 prefix_matches += 1
             total_count += 1
+            
+            # Store detailed result
+            detailed_result = {
+                'id': sample_id,
+                'question': prefix,
+                'ground_truth': ground_truth,
+                'generated': result['generated'],
+                'exact_match': result['exact_match'],
+                'contains_match': result['contains_match'],
+                'prefix_match': result['prefix_match'],
+            }
+            detailed_results.append(detailed_result)
 
         if total_count == 0:
             print(f"No samples evaluated for {benchmark_name}")
@@ -330,7 +365,8 @@ class HuggingFaceEvaluator:
             'exact_match_accuracy': exact_accuracy,
             'contains_match_accuracy': contains_accuracy,
             'prefix_match_accuracy': prefix_accuracy,
-            'format': 'generative'
+            'format': 'generative',
+            'detailed_results': detailed_results
         }
 
         return results
@@ -513,6 +549,20 @@ def main():
                 )
 
                 if results:
+                    # Save detailed inference results
+                    detailed_results = results.pop('detailed_results', None)
+                    if detailed_results:
+                        inference_dir = os.path.join("results", model_name, "inference")
+                        os.makedirs(inference_dir, exist_ok=True)
+                        inference_file = os.path.join(
+                            inference_dir,
+                            f"{benchmark_name}_{timestamp}.jsonl"
+                        )
+                        with open(inference_file, 'w') as f:
+                            for result in detailed_results:
+                                f.write(json.dumps(result) + '\n')
+                        print(f"Saved detailed inference results to: {inference_file}")
+                    
                     model_results[benchmark_name] = results
 
                     # Print results based on format

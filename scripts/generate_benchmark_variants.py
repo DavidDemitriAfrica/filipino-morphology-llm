@@ -23,12 +23,13 @@ def generate_langgame_gen():
     
     samples = []
     with open(input_file, 'r', encoding='utf-8') as f:
-        for line in f:
+        for idx, line in enumerate(f):
             data = json.loads(line.strip())
             # For GEN format, just need question and answer (first option)
             gen_sample = {
                 "question": data["question"],
-                "answer": data["answer"]
+                "answer": data["answer"],
+                "id": f"langgame_gen_{idx:05d}"
             }
             samples.append(gen_sample)
     
@@ -93,7 +94,7 @@ def generate_multi_digit_addition_mcq():
     max_samples = 1000
     
     with open(gen_file, 'r', encoding='utf-8') as f:
-        for line in f:
+        for idx, line in enumerate(f):
             if len(samples) >= max_samples:
                 break
                 
@@ -120,7 +121,8 @@ def generate_multi_digit_addition_mcq():
             mcq_sample = {
                 "question": data["question"],
                 "answer": correct_answer,
-                "options": [correct_answer] + incorrect_options
+                "options": [correct_answer] + incorrect_options,
+                "id": f"multi_digit_addition_mcq_{idx:05d}"
             }
             samples.append(mcq_sample)
     

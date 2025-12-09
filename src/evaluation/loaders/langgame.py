@@ -33,6 +33,7 @@ def load_langgame(format="mcq", **kwargs):
     for i in index:
         sample = samples[i]
         prefix = sample["question"]
+        sample_id = sample.get("id", f"langgame_{format}_{i:05d}")
         
         if format == "mcq":
             options = sample["options"]
@@ -42,4 +43,4 @@ def load_langgame(format="mcq", **kwargs):
             ground_truth = sample["answer"]
             false_options = []
         
-        yield prefix, ground_truth, false_options
+        yield prefix, ground_truth, false_options, sample_id

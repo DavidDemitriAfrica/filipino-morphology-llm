@@ -91,5 +91,6 @@ def load_cute(split="test", task_types=None, max_per_task=100, **kwargs):
         prefix = task['question']
         ground_truth = task['answer']
         false_options = []  # Generative task, no MCQ options
+        sample_id = task.get("id", f"cute_gen_{i:05d}")
 
-        yield prefix, ground_truth, false_options
+        yield prefix, ground_truth, false_options, sample_id

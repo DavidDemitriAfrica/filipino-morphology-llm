@@ -2,6 +2,7 @@
 Loader for Hierarchical benchmark - diagnostic tasks across 6 compositional levels.
 """
 import json
+import random
 from pathlib import Path
 
 
@@ -13,8 +14,11 @@ def load_hierarchical(format="mcq", **kwargs):
         format: 'mcq' or 'gen'
         **kwargs: Additional arguments (ignored)
     
-    Returns:
-        List of task dictionaries
+    Yields:
+        - prefix: The question
+        - ground_truth: The correct answer
+        - false_options: List of incorrect options (empty for gen format)
+        - sample_id: Unique identifier for the sample
     """
     benchmarks_dir = Path("data/benchmarks")
     filepath = benchmarks_dir / f"hierarchical_{format}.jsonl"
@@ -32,4 +36,22 @@ def load_hierarchical(format="mcq", **kwargs):
             tasks.append(task)
     
     print(f"Loaded {len(tasks)} hierarchical tasks ({format} format)")
-    return tasks
+    
+    # Shuffle indices
+    indices = list(range(len(tasks)))
+    random.shuffle(indices)
+    
+    for i in indices:
+        task = tasks[i]
+        prefix = task["question"]
+        sample_id = task.get("id", f"hierarchical_{format}_{i:05d}")
+        
+        if format == "mcq":
+            options = task["options"]
+            ground_truth = options[0]
+            false_options = options[1:]
+        else:  # gen
+            ground_truth = task["answer"]
+            false_options = []
+        
+        yield prefix, ground_truth, false_options, sample_id

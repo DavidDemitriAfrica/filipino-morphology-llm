@@ -51,14 +51,13 @@ def main():
     
     # Configuration
     num_digits = 3
-    total_numbers = 10**(2*num_digits) - 10**(2*num_digits-1)
-    val_size = total_numbers // 10
-    train_size = total_numbers - val_size
+    # Limit to 1000 samples for evaluation
+    val_size = 1000
+    train_size = 1000  # Not used, but keep for compatibility
     
     print(f"Configuration:")
     print(f"  Number of digits: {num_digits}")
-    print(f"  Train samples: {train_size}")
-    print(f"  Val samples: {val_size}")
+    print(f"  Evaluation samples: {val_size}")
     print()
     
     # Generate simple questions (always works)
@@ -66,7 +65,7 @@ def main():
     train_questions, train_answers, val_questions, val_answers = generate_simple_questions(
         num_digits, train_size, val_size
     )
-    print(f"✓ Generated {len(train_questions)} train and {len(val_questions)} val samples")
+    print(f"✓ Generated {len(val_questions)} evaluation samples")
     print()
     
     # Save as JSONL for benchmarking
