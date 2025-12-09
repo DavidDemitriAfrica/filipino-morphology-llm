@@ -31,6 +31,13 @@ Quick guide to all documentation in this repository.
 - **[docs/BENCHMARK_FORMATS.md](docs/BENCHMARK_FORMATS.md)** - Benchmark format specifications (MCQ vs GEN)
 - **[training/nemo/data/DATA_PREPROCESSING.md](training/nemo/data/DATA_PREPROCESSING.md)** - Data preprocessing for both vanilla and stochastok modes
 
+### Job Templates & Security
+- **[job_templates/README.md](job_templates/README.md)** - PBS job templates and setup wizard
+- **[docs/SECURITY.md](docs/SECURITY.md)** - Security best practices for cluster deployment
+
+### Technical References
+- **[docs/GEMMA3_MONKEY_PATCH.md](docs/GEMMA3_MONKEY_PATCH.md)** - Known Gemma3 bugs and workarounds
+
 ---
 
 ## Quick Reference by Task
@@ -59,6 +66,12 @@ Quick guide to all documentation in this repository.
 ### "I want to understand the benchmarks"
 → **[docs/EVALUATION.md](docs/EVALUATION.md)** (sections 1-4: PACUTE, Hierarchical, LangGame, Math)
 
+### "I want to set up PBS jobs securely"
+→ **[job_templates/README.md](job_templates/README.md)** + **[docs/SECURITY.md](docs/SECURITY.md)**
+
+### "I'm having issues with Gemma3"
+→ **[docs/GEMMA3_MONKEY_PATCH.md](docs/GEMMA3_MONKEY_PATCH.md)**
+
 ---
 
 ## Document Summary
@@ -67,12 +80,16 @@ Quick guide to all documentation in this repository.
 |------|-------|---------|
 | README.md | ~200 | Project overview, quick start |
 | SETUP.md | ~770 | Environment setup, installation |
+| MERGE_REQUEST.md | ~180 | Branch merge summary |
 | docs/RESEARCH.md | ~400 | Research design, methods, implementation |
 | docs/TRAINING.md | ~350 | Training workflows, configurations |
 | docs/EVALUATION.md | ~450 | Benchmarks, evaluation, analysis |
+| docs/SECURITY.md | ~230 | Security best practices |
+| docs/GEMMA3_MONKEY_PATCH.md | ~130 | Gemma3 bug workarounds |
 | training/nemo/data/DATA_PREPROCESSING.md | ~300 | Data preprocessing guide |
+| job_templates/README.md | ~85 | Job templates guide |
 
-**Total: ~2,470 lines** of focused documentation (down from 40+ scattered files)
+**Total: ~3,095 lines** of focused documentation (down from 40+ scattered files)
 
 ---
 

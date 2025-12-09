@@ -84,6 +84,9 @@ See **[docs/EVALUATION.md](docs/EVALUATION.md)** for complete evaluation guide.
 | **[docs/EVALUATION.md](docs/EVALUATION.md)** | Benchmark generation and model evaluation |
 | **[docs/BENCHMARK_FORMATS.md](docs/BENCHMARK_FORMATS.md)** | Benchmark format specifications (MCQ vs GEN) |
 | **[training/nemo/data/DATA_PREPROCESSING.md](training/nemo/data/DATA_PREPROCESSING.md)** | Data preprocessing guide |
+| **[job_templates/README.md](job_templates/README.md)** | PBS job templates and setup wizard |
+| **[docs/SECURITY.md](docs/SECURITY.md)** | Security best practices for cluster deployment |
+| **[docs/GEMMA3_MONKEY_PATCH.md](docs/GEMMA3_MONKEY_PATCH.md)** | Known Gemma3 bugs and workarounds |
 
 ---
 
@@ -125,12 +128,22 @@ Diagnostic tasks across 6 compositional levels to identify where models fail:
 ```
 filipino-morphology-llm/
 ├── README.md                    # This file
+├── INDEX.md                     # Documentation index
 ├── SETUP.md                     # Setup guide
 ├── docs/                        # Documentation
 │   ├── RESEARCH.md             # Research overview
 │   ├── TRAINING.md             # Training guide
 │   ├── EVALUATION.md           # Evaluation guide
-│   └── BENCHMARK_FORMATS.md    # Benchmark format specs
+│   ├── BENCHMARK_FORMATS.md    # Benchmark format specs
+│   ├── SECURITY.md             # Security best practices
+│   └── GEMMA3_MONKEY_PATCH.md  # Gemma3 bug workarounds
+├── job_templates/               # PBS job templates (sanitized)
+│   ├── README.md               # Template usage guide
+│   ├── setup_jobs.sh           # Interactive setup wizard
+│   ├── run_cpt.template.pbs
+│   ├── run_evaluation_batch.template.pbs
+│   ├── preprocess_data.template.pbs
+│   └── submit_parallel_evaluation.template.sh
 ├── data/                        # Data files
 │   ├── benchmarks/             # Evaluation benchmarks (JSONL)
 │   ├── chunks/                 # Preprocessed chunks
@@ -147,15 +160,13 @@ filipino-morphology-llm/
 │   │   └── data/               # Data preprocessing
 │   │       └── DATA_PREPROCESSING.md
 │   └── stochastok/             # Small-scale training (GPT-2)
-├── jobs/                        # PBS job scripts
-│   ├── run_cpt.pbs             # Training job
-│   ├── preprocess_data_parallel.pbs
-│   └── preprocess_test_chunk1.pbs
+├── jobs/                        # PBS job scripts (local, gitignored)
+│   └── *.pbs                   # Created from templates
 └── scripts/                     # Utility scripts
     ├── generate_benchmarks.py      # Generate benchmarks
     ├── run_evaluation.py           # Evaluate models
-    ├── run_evaluation_batch.sh     # Batch evaluation
-    └── evaluate_downstream.py      # Downstream tasks
+    ├── submit_parallel_eval.sh     # Parallel evaluation
+    └── analyze_inference_results.py # Analyze results
 ```
 
 ---
