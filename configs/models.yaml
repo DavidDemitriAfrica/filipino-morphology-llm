@@ -95,6 +95,12 @@ models:
     type: it
     tokenizer: Qwen/Qwen3-1.7B
 
+  # GPT-OSS Model
+  gpt-oss-20b:
+    path: openai/gpt-oss-20b
+    type: it
+    tokenizer: openai/gpt-oss-20b
+
   # Cerebras GPT Models (all share same GPT-2 tokenizer)
   cerebras-gpt-111m:
     path: cerebras/Cerebras-GPT-111M

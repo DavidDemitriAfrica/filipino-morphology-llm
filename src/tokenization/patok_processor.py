@@ -1,366 +1,520 @@
-import os
+"""
+Morphology-aware Patok tokenization for Filipino.
+
+This module implements affix-aware and reduplication-aware tokenization
+using Aho-Corasick automaton for efficient affix detection.
+"""
+
 import json
-from tqdm import tqdm
+import os
 import random
 import numpy as np
+import ahocorasick
+from tqdm import tqdm
+from typing import List, Tuple, Optional
 from .base_processor import TokenizerProcessor
 
 
-# Helper functions for file operations
-def load_json_dict(filepath, convert_tuple_keys=False):
-    """Load a JSON dictionary from file with optional tuple key conversion."""
-    with open(filepath, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-        if convert_tuple_keys:
-            # Convert string keys "id1,id2" back to tuple (id1, id2)
-            return {tuple(map(int, k.split(','))): v for k, v in data.items()}
-        return data
-
-
-def save_json_dict(filepath, data, convert_tuple_keys=False):
-    """Save a dictionary to JSON file with optional tuple key conversion."""
-    if convert_tuple_keys:
-        # Convert tuple keys (id1, id2) to string "id1,id2"
-        data = {f"{k[0]},{k[1]}": v for k, v in data.items()}
-    with open(filepath, 'w', encoding='utf-8') as f:
-        json.dump(data, f)
-
-
-def replace_tokens_at_index(token_ids, idx, replacement, num_to_remove=1):
-    """Replace tokens at a given index with new tokens."""
-    if isinstance(replacement, int):
-        replacement = [replacement]
-    return token_ids[:idx] + list(replacement) + token_ids[idx + num_to_remove:]
-
-
-class PatokProcessor(TokenizerProcessor):
+class MorphologyAwarePatokProcessor(TokenizerProcessor):
     """
-    A processor that applies Patok expansion to the tokenized data.
+    Patok processor with morphological awareness for Filipino.
+
+    Features:
+    - Aho-Corasick automaton for fast affix detection
+    - Affix-aware contraction (avoids breaking known affixes)
+    - Morphological re-expansion (splits off affixes and duplications)
+    - Configurable affix awareness probability
     """
-    def __init__(self, tokenizer, expand_prop=0.3, contract_prop=0.3, affix_preference=0.7, affixes_file=None):
+
+    def __init__(
+        self,
+        tokenizer,
+        prefix_file: Optional[str] = None,
+        infix_file: Optional[str] = None,
+        suffix_file: Optional[str] = None,
+        num_toks_to_cont: List[int] = [2, 3, 4],
+        contract_prob: List[float] = [0.35, 0.35, 0.3],
+        affix_awareness: float = 0.95,
+        affix_awareness_if_overlap: float = 0.75,
+        expand_prop: float = 0.1,
+        contract_prop: float = 0.9,
+    ):
+        """
+        Initialize morphology-aware Patok processor.
+
+        Args:
+            tokenizer: Tokenizer with encode/decode methods
+            prefix_file: Path to file containing one prefix per line
+            infix_file: Path to file containing one infix per line
+            suffix_file: Path to file containing one suffix per line
+            num_toks_to_cont: List of possibilities for number of tokens to merge
+            contract_prob: Probability weights for num_toks_to_cont (must sum to 1)
+            affix_awareness: Probability of skipping contraction if token is affix
+            affix_awareness_if_overlap: Affix awareness if multiple affixes at same position
+            expand_prop: Default proportion of tokens to expand
+            contract_prop: Default proportion of tokens to contract
+        """
+        # Initialize parent class
         super().__init__(tokenizer)
+        self.prefix_file = prefix_file
+        self.infix_file = infix_file
+        self.suffix_file = suffix_file
+        self.num_toks_to_cont = num_toks_to_cont
+        self.contract_prob = contract_prob
+        self.affix_awareness = affix_awareness
+        self.affix_awareness_if_overlap = affix_awareness_if_overlap
         self.expand_prop = expand_prop
         self.contract_prop = contract_prop
-        self.affix_preference = affix_preference
+
+        # Load affixes and build automaton
+        self.affixes = self._build_affix_list()
+        self.affix_finder = self._build_affix_finder(self.affixes)
+
+        # Get affix token IDs
+        self.affix_ids = self._generate_affix_ids(self.affixes)
+
+        # Set up expansion dictionary (uses inherited method from base processor)
         self.set_expansions()
-        self.set_contractions()
-        self.load_affixes(affixes_file)
 
-    def expand(self, token_ids, expand_prop=0.3, max_num_to_expand=None, disable_tqdm=True):
+        print(f"Initialized MorphologyAwarePatokProcessor:")
+        print(f"  - {len(self.affixes)} affix versions loaded")
+        print(f"  - {len(self.affix_ids)} affix token IDs")
+        print(f"  - {len(self.expansions)} expandable tokens")
+
+    def _build_affix_list(self) -> List[str]:
         """
-        Expand the sequence of tokens by splitting tokens.
-        Args:
-            token_ids (list): list of token_ids to expand.
-            expand_prop (float): proportion of tokens to (try) expanding.
-            max_num_to_expand (int): maximum number of tokens to expand.
-            disable_tqdm (bool): whether to disable tqdm progress bar.
+        Build list of affix variations from prefix, infix, and suffix files.
+        
+        For each prefix, generates four versions:
+        - Original (e.g., 'ma')
+        - Space-prepended (e.g., ' ma')
+        - Capitalized (e.g., 'Ma')
+        - Space-prepended and capitalized (e.g., ' Ma')
+        
+        For each suffix, generates two versions:
+        - Original (e.g., 'an')
+        - Space-appended (e.g., 'an ')
+        
+        Infixes are kept as-is.
+        
         Returns:
-            list: list of token_ids after expanding.
+            List of unique affix variations
         """
-        expand_prop = self._get_prop_value(expand_prop, self.expand_prop)
+
+        def read_affix_file(path: str) -> List[str]:
+            """Read text file with one affix per line."""
+            with open(path, "r", encoding="utf-8") as f:
+                return [line.strip() for line in f if line.strip()]
+
+        # Read affix files
+        prefix = read_affix_file(self.prefix_file)
+        infix = read_affix_file(self.infix_file)
+        suffix = read_affix_file(self.suffix_file)
+        all_affixes = prefix + infix + suffix
+
+        # Generate prefix variations
+        expanded_prefixes = []
+        for p in prefix:
+            expanded_prefixes.extend([
+                p,                      # original
+                " " + p,                # space-prepended
+                p.capitalize(),         # capitalized
+                " " + p.capitalize()    # space-prepended + capitalized
+            ])
+
+        # Generate suffix variations
+        expanded_suffixes = []
+        for s in suffix:
+            expanded_suffixes.extend([
+                s,          # original
+                s + " ",    # space-appended
+            ])
+
+        # Combine all variations and remove duplicates
+        all_affix_versions = expanded_prefixes + infix + expanded_suffixes
+        all_affix_versions = list(set(all_affix_versions))
+
+        print(f"Loaded {len(all_affixes)} affixes")
+        print(f"Converted affixes to {len(all_affix_versions)} space-prepended and capitalized versions")
+
+        return all_affix_versions
+
+    def _build_affix_finder(self, affixes: List[str]) -> ahocorasick.Automaton:
+        """
+        Build Aho-Corasick automaton for efficient affix detection.
+
+        Args:
+            affixes: List of affix strings
+
+        Returns:
+            Aho-Corasick automaton
+        """
+        affix_finder = ahocorasick.Automaton()
+
+        for affix in affixes:
+            affix_finder.add_word(affix, affix)
+
+        affix_finder.make_automaton()
+        return affix_finder
+
+    def _generate_affix_ids(self, affixes:List[str]) -> List[int]:
+        """
+        Get token id's of affixes that are in the tokenizer's vocabulary.
+        
+        Uses the inherited get_mergeable_ranks() method to get a bytes->int mapping
+        that works across both tiktoken and HuggingFace tokenizers.
+        
+        Args:
+            affixes (list): list of affixes
+        Returns:
+            list: list of token_ids corresponding to affixes that are in vocabulary
+        """
+        # Use the inherited get_mergeable_ranks() method
+        # This handles both tiktoken and HuggingFace tokenizers
+        mergeable_ranks = self.get_mergeable_ranks()
+        
+        # Get affix IDs by checking if affix bytes are in mergeable_ranks
+        affix_ids = [mergeable_ranks.get(aff.encode('utf-8')) for aff in affixes
+                     if aff.encode('utf-8') in mergeable_ranks]
+        
+        # Filter out None values
+        affix_ids = [aid for aid in affix_ids if aid is not None]
+
+        return affix_ids
+
+    def find_affixes(self, s: str) -> List[Tuple[int, str]]:
+        """
+        Find all affixes in string s.
+
+        Args:
+            s: String to search
+
+        Returns:
+            List of (start_index, affix) tuples
+        """
+        matches = []
+        for end_index, aff in self.affix_finder.iter(s):
+            start_index = end_index - len(aff) + 1
+            matches.append((start_index, aff))
+        return matches
+
+    def contract_randomly(
+        self,
+        token_ids: List[int],
+    ) -> Tuple[str, int, int]:
+        """
+        Randomly contract 2-3 adjacent tokens, avoiding affixes.
+
+        Uses affix awareness: if contracted token contains affix,
+        may skip based on probability.
+
+        Args:
+            token_ids: List of token IDs
+            num_tokens: Possible numbers of tokens to contract
+            contract_prob: Probability weights for num_tokens choices
+
+        Returns:
+            (contracted_string, start_idx, end_idx)
+        """
+        # Choose number of tokens to contract
+        n = random.choices(self.num_toks_to_cont, weights=self.contract_prob)[0]
+
+        # If token_ids is too short, return the entire string
+        if len(token_ids) < n:
+            return self.tokenizer.decode(token_ids), 0, len(token_ids)
+
+        # Keep trying until we find a valid contraction
+        max_attempts = 100
+        for _ in range(max_attempts):
+            # Pick random starting index
+            start_idx = random.randint(0, len(token_ids) - n)
+
+            # Get tokens to contract
+            for_contraction = token_ids[start_idx:start_idx + n]
+
+            # Avoid contracting special tokens (BOS/EOS)
+            if hasattr(self.tokenizer, "bos_token_id"):
+                special_ids = [self.tokenizer.bos_token_id, self.tokenizer.eos_token_id]
+                for _ in range(max_attempts):
+                    if not any(tid in special_ids for tid in for_contraction):
+                        break
+                    start_idx = random.randint(0, len(token_ids) - n)
+                    for_contraction = token_ids[start_idx:start_idx + n]
+
+            # Check if any token is already an affix
+            affix_in_tokens = any(tok_id in self.affix_ids for tok_id in for_contraction)
+
+            # Contract the tokens
+            contracted = self.tokenizer.decode(for_contraction)
+
+            # Find all affixes in contracted token
+            affix_matches = self.find_affixes(contracted)
+            affix_indices = [idx for idx, _ in affix_matches]
+
+            # Check for overlapping affixes (multiple affixes at same position)
+            has_overlap = len(affix_indices) != len(set(affix_indices))
+
+            # Determine affix awareness threshold
+            awareness = (self.affix_awareness_if_overlap if has_overlap
+                        else self.affix_awareness)
+
+            # Random test for affix awareness
+            if not affix_in_tokens or random.random() >= awareness:
+                return contracted, start_idx, start_idx + n
+
+        # If we couldn't find valid contraction, just return first n tokens
+        start_idx = 0
+        contracted = self.tokenizer.decode(token_ids[:n])
+        return contracted, start_idx, n
+
+    def affix_aware_expand(self, token: str) -> List[str]:
+        """
+        Expand token by splitting off known affixes.
+
+        If multiple affixes found, randomly chooses one.
+
+        Args:
+            token: String to expand
+
+        Returns:
+            List of token pieces (may contain affix and remainder)
+        """
+        affix_matches = self.find_affixes(token)
+
+        # Return unchanged if no affixes or RNG fails
+        if not affix_matches or random.random() > self.affix_awareness:
+            return [token]
+
+        # Prefer affixes with spaces (more likely to be true prefix/suffix)
+        affixes_with_space = [(idx, aff) for idx, aff in affix_matches if ' ' in aff]
+        if affixes_with_space:
+            affix_matches = affixes_with_space
+
+        # Randomly choose an affix if multiple found
+        idx, affix = random.choice(affix_matches)
+
+        # Split token at affix boundary
+        pieces = [
+            token[:idx],
+            affix,
+            token[idx + len(affix):]
+        ]
+
+        # Remove empty strings
+        return [p for p in pieces if p]
+
+    def dup_aware_expand(self, token_list: List[str]) -> List[str]:
+        """
+        Expand tokens by splitting off syllable duplications.
+
+        Looks for 2-letter syllable repetitions (e.g., "gaganda" → "ga" + "ganda")
+
+        Args:
+            token_list: List of token strings
+
+        Returns:
+            List with duplications split
+        """
+        result = []
+        for token in token_list:
+            split_tokens = self._split_repeating_pairs(token)
+            result.extend(split_tokens)
+        return result
+
+    def _split_repeating_pairs(self, s: str) -> List[str]:
+        """Split off first instance of any 2-letter repetition."""
+        for i in range(len(s)):
+            if i + 4 <= len(s):
+                chunk = s[i:i+4]
+                first_pair = chunk[:2]
+                second_pair = chunk[2:4]
+
+                if first_pair == second_pair:
+                    tokens = []
+                    if i > 0:
+                        tokens.append(s[:i])
+                    tokens.append(first_pair)
+                    # Remove first instance of repetition
+                    tokens.append(s[i:].replace(first_pair, '', 1))
+                    return [t for t in tokens if t]
+
+        return [s]
+
+    def tokenizer_expand(self, token_list: List[str]) -> List[int]:
+        """
+        Re-tokenize list of strings using base tokenizer.
+
+        Args:
+            token_list: List of strings
+
+        Returns:
+            Flattened list of token IDs
+        """
+
+        try:
+            token_ids = [self.tokenizer.encode(s, add_special_tokens=False) for s in token_list]
+        except:
+            token_ids = [self.tokenizer.encode(s) for s in token_list]
+        # Flatten
+        return [tid for group in token_ids for tid in group]
+
+    def stochastok_expand_nonaffs(
+        self,
+        token_ids: List[int],
+        expand_prop: Optional[float] = None,
+        max_num_to_expand: Optional[int] = None,
+        disable_tqdm: bool = True
+    ) -> List[int]:
+        """
+        Stochastically expand non-affix tokens.
+
+        Args:
+            token_ids: List of token IDs
+            expand_prop: Proportion of tokens to expand
+            max_num_to_expand: Maximum number to expand
+            disable_tqdm: Disable progress bar
+
+        Returns:
+            List of token IDs after expansion
+        """
+        if expand_prop is None:
+            expand_prop = self.expand_prop
+
         num_to_expand = int(len(token_ids) * expand_prop)
         num_expanded = 0
-        
-        for _ in tqdm(range(num_to_expand), disable=disable_tqdm):
-            if max_num_to_expand is not None and num_expanded >= max_num_to_expand:
+
+        for _ in tqdm(range(num_to_expand), disable=disable_tqdm, desc="Expanding"):
+            if max_num_to_expand and num_expanded >= max_num_to_expand:
                 break
-            
-            idx = np.random.randint(len(token_ids))
-            token_id = token_ids[idx]
-            
-            if token_id in self.expansions:
-                chosen_expansion = random.choice(self.expansions[token_id])
-                token_ids = replace_tokens_at_index(token_ids, idx, chosen_expansion, num_to_remove=1)
-                num_expanded += 1
-        
-        return token_ids
 
-    def contract(self, token_ids, contract_prop=0.3, max_num_to_contract=None, disable_tqdm=True):
-        """
-        Contract the sequence of tokens by merging adjacent token pairs.
-        Args:
-            token_ids (list): list of token_ids to contract.
-            contract_prop (float): proportion of tokens to (try) contracting.
-            max_num_to_contract (int): maximum number of token pairs to contract.
-            disable_tqdm (bool): whether to disable tqdm progress bar.
-        Returns:
-            list: list of token_ids after contracting.
-        """
-        contract_prop = self._get_prop_value(contract_prop, self.contract_prop)
-        num_to_contract = int(len(token_ids) * contract_prop)
-        num_contracted = 0
-        
-        for _ in tqdm(range(num_to_contract), disable=disable_tqdm):
-            if max_num_to_contract is not None and num_contracted >= max_num_to_contract:
-                break
-            if len(token_ids) < 2:
-                break
-            
-            idx = np.random.randint(len(token_ids) - 1)
-            token_pair = (token_ids[idx], token_ids[idx + 1])
-            
-            if token_pair in self.contractions:
-                contracted_token_id = self.contractions[token_pair]
-                token_ids = replace_tokens_at_index(token_ids, idx, contracted_token_id, num_to_remove=2)
-                num_contracted += 1
-        
-        return token_ids
-
-    def set_expansions(self):
-        """Loads expansions dict from file if it exists, otherwise builds and saves it."""
-        filename = f"{self.tokenizer_name}_expansions.json"
-        json_file_path = self.get_cache_path("tokenizer_expansions", filename)
-
-        if os.path.exists(json_file_path):
-            print(f"Found '{filename}' at: {json_file_path}")
-            self.expansions = load_json_dict(json_file_path)
-            assert isinstance(self.expansions, dict), f"{filename} must be a dictionary."
-            print(f"Successfully loaded {filename}.")
-        else:
-            contractions, self.expansions = self.build_contractions_and_expansions()
-            save_json_dict(json_file_path, self.expansions)
-            print(f"Successfully saved {filename}.")
-        
-        print(f"Successfully set self.expansions.")
-
-    def set_contractions(self):
-        """Loads contractions dict from file if it exists, otherwise builds and saves it."""
-        filename = f"{self.tokenizer_name}_contractions.json"
-        json_file_path = self.get_cache_path("tokenizer_expansions", filename)
-
-        if os.path.exists(json_file_path):
-            print(f"Found '{filename}' at: {json_file_path}")
-            self.contractions = load_json_dict(json_file_path, convert_tuple_keys=True)
-            assert isinstance(self.contractions, dict), f"{filename} must be a dictionary."
-            print(f"Successfully loaded {filename}.")
-        else:
-            self.contractions, expansions = self.build_contractions_and_expansions()
-            save_json_dict(json_file_path, self.contractions, convert_tuple_keys=True)
-            print(f"Successfully saved {filename}.")
-        
-        print(f"Successfully set self.contractions.")
-
-    def build_contractions_and_expansions(self):
-        """
-        Build contractions and expansions dictionaries from tokenizer vocabulary.
-        
-        Returns:
-            contractions (dict): {(token_id1, token_id2): merged_token_id}
-            expansions (dict): {token_id: [(split_id1, split_id2), ...]}
-        """
-        contractions = self._build_contractions_dict()
-        expansions = self._invert_contractions_to_expansions(contractions)
-        return contractions, expansions
-
-    def _build_contractions_dict(self):
-        """Build the contractions dictionary from tokenizer vocab."""
-        ttokenizer_byt2int = self.get_mergeable_ranks()
-        ttokenizer_tokens_as_tuples = [tuple(token) for token in list(ttokenizer_byt2int.keys())]
-        contractions = {}
-        
-        for i, (token_as_bytes, token_id) in tqdm(
-            enumerate(ttokenizer_byt2int.items()),
-            total=len(ttokenizer_byt2int),
-            desc="Building tokenizer's contractions"
-        ):
-            # Skip tokens that are too short to split
-            if len(token_as_bytes) <= 1:
-                continue
-            
-            # Find all valid splits for this token
-            splits = self._find_valid_splits(
-                token_as_bytes, 
-                ttokenizer_tokens_as_tuples, 
-                ttokenizer_byt2int
-            )
-            
-            # Some tokenizers (like Gemma with byte-fallback) may have tokens that can't be split
-            # Just skip them - they won't be contractible
-            if len(splits) == 0:
-                continue
-            
-            for first_id, second_id in splits:
-                contractions[(first_id, second_id)] = token_id
-        
-        return contractions
-
-    def _find_valid_splits(self, token_as_bytes, valid_tokens, token_mapping):
-        """Find all valid ways to split a token into two sub-tokens."""
-        splits = []
-        for j in range(1, len(token_as_bytes)):
-            first_part = token_as_bytes[:j]
-            second_part = token_as_bytes[j:]
-            
-            if tuple(first_part) in valid_tokens and tuple(second_part) in valid_tokens:
-                first_part_id = token_mapping[first_part]
-                second_part_id = token_mapping[second_part]
-                splits.append((first_part_id, second_part_id))
-        
-        return splits
-
-    def _invert_contractions_to_expansions(self, contractions):
-        """Convert contractions dict to expansions dict (inverse mapping)."""
-        expansions = {}
-        for token_pair, merged_token_id in contractions.items():
-            if merged_token_id in expansions:
-                expansions[merged_token_id].append(token_pair)
-            else:
-                expansions[merged_token_id] = [token_pair]
-        return expansions
-
-    def load_affixes(self, affixes_file=None):
-        """Load Filipino affixes from file and convert them to token IDs."""
-        if affixes_file is None:
-            affixes_file = "data/affixes/filipino_affixes.txt"
-        
-        affixes_file_path = get_file_path(affixes_file)
-        self.affix_strings = []
-        self.affix_token_ids = set()
-        
-        if os.path.exists(affixes_file_path):
-            print(f"Loading affixes from: {affixes_file_path}")
-            self.affix_strings = self._load_affixes_from_file(affixes_file_path)
-            self.affix_token_ids = self._convert_affixes_to_token_ids(self.affix_strings)
-            print(f"Loaded {len(self.affix_strings)} affixes, {len(self.affix_token_ids)} are single tokens")
-        else:
-            print(f"Warning: Affixes file not found at {affixes_file_path}")
-
-    def _load_affixes_from_file(self, filepath):
-        """Read affixes from file, one per line."""
-        with open(filepath, 'r', encoding='utf-8') as f:
-            return [line.strip() for line in f if line.strip()]
-
-    def _convert_affixes_to_token_ids(self, affix_strings):
-        """Convert affix strings to single-token IDs."""
-        affix_token_ids = set()
-        for affix in affix_strings:
-            try:
-                token_ids = self.tokenizer.encode(affix)
-                if len(token_ids) == 1:
-                    affix_token_ids.add(token_ids[0])
-            except Exception as e:
-                print(f"Warning: Could not encode affix '{affix}': {e}")
-        return affix_token_ids
-
-    def affix_aware_expand_contract(self, token_ids, num_iterations=3, expand_prop=0.3, 
-                                     contract_prop=0.3, affix_preference=0.7, 
-                                     disable_tqdm=True):
-        """
-        Stochastically expand and contract tokens multiple times, with preference for
-        forming Filipino affixes.
-        
-        Args:
-            token_ids (list): list of token_ids to process.
-            num_iterations (int): number of expand-contract cycles to perform.
-            expand_prop (float): proportion of tokens to attempt expanding per iteration.
-            contract_prop (float): proportion of tokens to attempt contracting per iteration.
-            affix_preference (float): probability [0-1] of choosing affix-forming contractions when available.
-            disable_tqdm (bool): whether to disable tqdm progress bar.
-        
-        Returns:
-            list: list of token_ids after processing.
-        """
-        expand_prop = self._get_prop_value(expand_prop, self.expand_prop)
-        contract_prop = self._get_prop_value(contract_prop, self.contract_prop)
-        affix_preference = self._get_prop_value(affix_preference, self.affix_preference)
-        
-        for iteration in tqdm(range(num_iterations), desc="Affix-aware processing", disable=disable_tqdm):
-            token_ids = self._selective_expand(token_ids, expand_prop, disable_tqdm=True)
-            token_ids = self._affix_preferring_contract(token_ids, contract_prop, affix_preference, disable_tqdm=True)
-        
-        return token_ids
-
-    def _get_prop_value(self, provided_value, default_value):
-        """Return provided value if not None, otherwise return default."""
-        return provided_value if provided_value is not None else default_value
-
-    def _selective_expand(self, token_ids, expand_prop, disable_tqdm=True):
-        """Expand tokens, avoiding expansion of tokens that are already affixes."""
-        num_to_expand = int(len(token_ids) * expand_prop)
-        num_expanded = 0
-        
-        for _ in range(num_to_expand):
             if len(token_ids) == 0:
                 break
-            
-            expandable_indices, non_affix_expandable = self._find_expandable_indices(token_ids)
-            
-            if len(expandable_indices) == 0:
-                break
-            
-            # Prefer expanding non-affix tokens
-            idx = self._choose_index_preferring_non_affixes(expandable_indices, non_affix_expandable)
-            
-            # Perform expansion
+
+            idx = np.random.randint(len(token_ids))
             token_id = token_ids[idx]
-            chosen_expansion = random.choice(self.expansions[token_id])
-            token_ids = replace_tokens_at_index(token_ids, idx, chosen_expansion, num_to_remove=1)
-            num_expanded += 1
-        
-        return token_ids
 
-    def _find_expandable_indices(self, token_ids):
-        """Find indices of expandable tokens, separating affix and non-affix tokens."""
-        expandable_indices = []
-        non_affix_expandable = []
-        
-        for idx, token_id in enumerate(token_ids):
+            # Skip affixes
+            while token_id in self.affix_ids and len(token_ids) > 0:
+                idx = np.random.randint(len(token_ids))
+                token_id = token_ids[idx]
+
+            # Expand if possible
             if token_id in self.expansions:
-                expandable_indices.append(idx)
-                if token_id not in self.affix_token_ids:
-                    non_affix_expandable.append(idx)
-        
-        return expandable_indices, non_affix_expandable
+                chosen_expansion = random.choice(self.expansions[token_id])
+                token_ids = (token_ids[:idx] +
+                           list(chosen_expansion) +
+                           token_ids[idx+1:])
+                num_expanded += 1
 
-    def _choose_index_preferring_non_affixes(self, all_indices, non_affix_indices):
-        """Choose an index, preferring non-affix indices if available."""
-        if len(non_affix_indices) > 0:
-            return random.choice(non_affix_indices)
-        return random.choice(all_indices)
-
-    def _affix_preferring_contract(self, token_ids, contract_prop, affix_preference, disable_tqdm=True):
-        """Contract tokens with preference for forming affixes."""
-        num_to_contract = int(len(token_ids) * contract_prop)
-        num_contracted = 0
-        
-        for _ in range(num_to_contract):
-            if len(token_ids) < 2:
-                break
-            
-            contractible_pairs, affix_forming_pairs = self._find_contractible_pairs(token_ids)
-            
-            if len(contractible_pairs) == 0:
-                break
-            
-            # Choose pair based on affix preference
-            idx, contracted_token_id = self._choose_contraction_with_affix_preference(
-                contractible_pairs, affix_forming_pairs, affix_preference
-            )
-            
-            # Perform the contraction
-            token_ids = replace_tokens_at_index(token_ids, idx, contracted_token_id, num_to_remove=2)
-            num_contracted += 1
-        
         return token_ids
 
-    def _find_contractible_pairs(self, token_ids):
-        """Find all contractible adjacent token pairs, separating affix-forming ones."""
-        contractible_pairs = []
-        affix_forming_pairs = []
-        
-        for idx in range(len(token_ids) - 1):
-            token_pair = (token_ids[idx], token_ids[idx + 1])
-            if token_pair in self.contractions:
-                contracted_token_id = self.contractions[token_pair]
-                contractible_pairs.append((idx, contracted_token_id))
-                
-                if contracted_token_id in self.affix_token_ids:
-                    affix_forming_pairs.append((idx, contracted_token_id))
-        
-        return contractible_pairs, affix_forming_pairs
+    def contract_expand(
+        self,
+        token_ids: List[int],
+        contract_prop: Optional[float] = None,
+        expand_prop: Optional[float] = None,
+        disable_tqdm: bool = True
+    ) -> List[int]:
+        """
+        Main Patok pipeline: contract-expand with morphological awareness.
 
-    def _choose_contraction_with_affix_preference(self, all_pairs, affix_pairs, preference):
-        """Choose a contraction pair, preferring affix-forming ones based on preference."""
-        if len(affix_pairs) > 0 and random.random() < preference:
-            return random.choice(affix_pairs)
-        return random.choice(all_pairs)
+        Process:
+        1. Contract random tokens (avoiding affixes)
+        2. Re-expand contracted token by:
+           a. Splitting off known affixes
+           b. Splitting off syllable duplications
+           c. Re-tokenizing with base tokenizer
+        3. Stochastically expand remaining non-affix tokens
+
+        Args:
+            token_ids: List of token IDs
+            contract_prop: Proportion of tokens to contract
+            expand_prop: Proportion to expand in final step
+            tok_to_contract: Options for number of tokens to contract
+            contract_prob: Probability weights for tok_to_contract
+            disable_tqdm: Disable progress bar
+
+        Returns:
+            List of token IDs after processing
+        """
+        if contract_prop is None:
+            contract_prop = self.contract_prop
+        if expand_prop is None:
+            expand_prop = self.expand_prop
+
+        num_to_contract = int(len(token_ids) * contract_prop)
+
+        for _ in tqdm(range(num_to_contract),
+                     desc='Contracting and expanding w/ morphology-awareness',
+                     disable=disable_tqdm):
+
+            # Contract random tokens
+            contracted, start_idx, end_idx = self.contract_randomly(token_ids)
+
+            # Affix-aware expansion
+            aff_aware = self.affix_aware_expand(contracted)
+
+            # Duplication-aware expansion
+            dup_aware = self.dup_aware_expand(aff_aware)
+
+            # Re-tokenize
+            new_token_ids = self.tokenizer_expand(dup_aware)
+
+            # Replace in original sequence
+            token_ids[start_idx:end_idx] = new_token_ids
+
+        # Final stochastic expansion of non-affixes
+        token_ids = self.stochastok_expand_nonaffs(
+            token_ids, expand_prop, disable_tqdm=disable_tqdm
+        )
+
+        return token_ids
+
+    def process(
+        self,
+        text: str,
+        contract_prop: Optional[float] = None,
+        expand_prop: Optional[float] = None,
+        disable_tqdm: bool = True
+    ) -> List[int]:
+        """
+        Tokenize text with morphology-aware Patok processing.
+
+        Args:
+            text: Input text
+            contract_prop: Proportion of tokens to contract
+            expand_prop: Proportion to expand
+            disable_tqdm: Disable progress bar
+
+        Returns:
+            List of token IDs
+        """
+        # Initial tokenization
+        token_ids = self.tokenizer.encode(text)
+
+        # Apply Patok processing
+        token_ids = self.contract_expand(
+            token_ids,
+            contract_prop=contract_prop,
+            expand_prop=expand_prop,
+            disable_tqdm=disable_tqdm
+        )
+
+        return token_ids
+
+    def decode(self, token_ids: List[int]) -> str:
+        """Decode token IDs back to text."""
+        return self.tokenizer.decode(token_ids)
+
+    def decode_tokens(self, token_ids: List[int]) -> List[str]:
+        """Decode token IDs to list of token strings."""
+        try:
+            list_of_tok_strings = [
+                self.tokenizer.decode_single_token_bytes(tid).decode("utf-8", "replace")
+                for tid in token_ids
+            ]
+
+        except:
+            list_of_tok_strings = [self.tokenizer.decode(tid) for tid in token_ids]
+
+        return list_of_tok_strings

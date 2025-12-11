@@ -11,6 +11,10 @@
 # PBS Job Script for Building Tokenizer Expansions - TEMPLATE
 # ============================================================================
 #
+# This script builds BOTH Stochastok and Patok tokenizer expansions:
+#   - Stochastok: Simple stochastic token expansion
+#   - Patok: Morphology-aware token expansion for Filipino
+#
 # This is a TEMPLATE file. Copy to jobs/ and customize:
 #   1. Replace YOUR_QUEUE_NAME with your cluster queue
 #   2. Replace /path/to/your/logs/ with your log directory
@@ -42,7 +46,7 @@ if [ -z "$TOKENIZER_NAME" ]; then
 fi
 
 echo "================================================================"
-echo "Building Tokenizer Expansions"
+echo "Building Tokenizer Expansions (Stochastok + Patok)"
 echo "================================================================"
 echo "Tokenizer: $TOKENIZER_NAME"
 echo "Start time: $(date)"
@@ -55,22 +59,75 @@ import os
 sys.path.insert(0, 'src')
 
 from transformers import AutoTokenizer
-from tokenization import StochastokProcessor
+from tokenization import StochastokProcessor, MorphologyAwarePatokProcessor
+from tokenization.base_processor import TokenizerProcessor
 
 tokenizer_name = "$TOKENIZER_NAME"
 print(f"Loading tokenizer: {tokenizer_name}")
 tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 print(f"✓ Loaded tokenizer: {type(tokenizer).__name__}")
 print(f"  Vocab size: {tokenizer.vocab_size}")
+
+# Get sanitized tokenizer name for checking existing files
+base_processor = TokenizerProcessor(tokenizer)
+sanitized_name = base_processor.tokenizer_name
+print(f"  Sanitized name: {sanitized_name}")
 print()
 
-print("Building tokenizer expansions...")
+# Check if expansions already exist
+stochastok_path = base_processor.get_cache_path("expansions_stochastok", f"expansions_stochastok_{sanitized_name}.json")
+patok_path = base_processor.get_cache_path("expansions_patok", f"expansions_patok_{sanitized_name}.json")
+
+stochastok_exists = os.path.exists(stochastok_path)
+patok_exists = os.path.exists(patok_path)
+
+if stochastok_exists and patok_exists:
+    print("=" * 70)
+    print("✓ Expansions already exist for this tokenizer!")
+    print("=" * 70)
+    print(f"Stochastok: {stochastok_path}")
+    print(f"Patok:      {patok_path}")
+    print()
+    print("Skipping build. To rebuild, delete the existing files.")
+    sys.exit(0)
+elif stochastok_exists:
+    print(f"Note: Stochastok expansions already exist at {stochastok_path}")
+elif patok_exists:
+    print(f"Note: Patok expansions already exist at {patok_path}")
+print()
+
+# Build Stochastok expansions
+print("=" * 70)
+print("Building Stochastok expansions...")
+print("=" * 70)
 print("(This may take several hours for large vocabularies)")
-processor = StochastokProcessor(tokenizer, expand_prop=0.1)
+stochastok_processor = StochastokProcessor(tokenizer, expand_prop=0.1)
+print()
+print("✓ Stochastok expansions built successfully")
+print(f"  Number of expansions: {len(stochastok_processor.expansions)}")
 print()
 
-print("✓ Tokenizer expansions built successfully")
-print(f"  Saved to: {processor.expansions_path}")
+# Build Patok expansions
+print("=" * 70)
+print("Building Patok expansions...")
+print("=" * 70)
+print("(This may take several hours for large vocabularies)")
+
+# Use Filipino affix files
+patok_processor = MorphologyAwarePatokProcessor(
+    tokenizer,
+    prefix_file="data/affixes_filipino/prefix.txt",
+    infix_file="data/affixes_filipino/infix.txt",
+    suffix_file="data/affixes_filipino/suffix.txt",
+)
+print()
+print("✓ Patok expansions built successfully")
+print(f"  Number of expansions: {len(patok_processor.expansions)}")
+print()
+
+print("=" * 70)
+print("All expansions built and saved!")
+print("=" * 70)
 EOF
 
 echo "================================================================"
