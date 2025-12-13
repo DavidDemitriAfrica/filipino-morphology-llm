@@ -309,12 +309,17 @@ results = evaluate_model(model_name="gpt2", benchmarks=["pacute"])
 
 Results on pretrained models before Filipino CPT:
 
-| Model | PACUTE (MCQ) | Hierarchical (MCQ) | LangGame (MCQ) | CUTE (GEN) |
-|-------|--------------|-------------------|----------------|------------|
-| **GPT-2** | 22.6% | 28.9% | 24.5% | 0% exact |
-| **GPT-2-medium** | 23.1% | 28.0% | 24.9% | 0% exact |
+| Model | Params | PACUTE | Hierarchical | LangGame | CUTE | Math |
+|-------|--------|--------|--------------|----------|------|------|
+| **GPT-2** | 124M | 22.6% | 28.9% | 24.5% | 23.2% | 0% |
+| **GPT-2-medium** | 355M | 23.1% | 28.0% | 24.9% | 20.4% | 0% |
+| **GPT-2-large** | 774M | 23.5% | 28.0% | 25.0% | 30.3% | 0% |
+| **GPT-2-xl** | 1.5B | 25.9% | 25.7% | 26.4% | 28.4% | 0% |
+| **Qwen2.5-0.5B** | 0.5B | 27.6% | 27.9% | 36.2% | 30.2% | 19.0% |
+| **Qwen2.5-0.5B-Instruct** | 0.5B | 29.8% | 26.9% | 37.8% | 34.1% | 26.1% |
+| **Qwen2.5-1.5B** | 1.5B | 30.3% | 28.0% | 40.7% | 55.3% | 74.3% |
 
-*MCQ accuracy near 25% indicates random baseline (4 options). Evaluation of 35 models in progress.*
+*MCQ benchmarks (PACUTE, Hierarchical, LangGame): 25% = random baseline (4 options). CUTE and Math: contains-match accuracy. Evaluation in progress (~28 models remaining).*
 
 ---
 
