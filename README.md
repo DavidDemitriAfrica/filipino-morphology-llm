@@ -318,8 +318,15 @@ Results on pretrained models before Filipino CPT:
 | **Qwen2.5-0.5B** | 0.5B | 27.6% | 27.9% | 36.2% | 30.2% | 19.0% |
 | **Qwen2.5-0.5B-Instruct** | 0.5B | 29.8% | 26.9% | 37.8% | 34.1% | 26.1% |
 | **Qwen2.5-1.5B** | 1.5B | 30.3% | 28.0% | 40.7% | 55.3% | 74.3% |
+| **Qwen2.5-1.5B-Instruct** | 1.5B | 28.2% | 27.7% | 42.3% | 39.0% | 62.4% |
+| **Qwen2.5-3B** | 3B | 34.5% | 27.0% | 46.7% | 41.8% | 64.4% |
+| **Qwen2.5-3B-Instruct** | 3B | 35.4% | 28.4% | 57.0% | 28.8% | 64.3% |
+| **Qwen2.5-7B** | 7B | 39.6% | 28.0% | 63.5% | 65.1% | 53.6% |
+| **Qwen2.5-7B-Instruct** | 7B | 42.3% | 27.4% | 68.3% | 43.2% | 83.5% |
+| **Qwen2.5-14B** | 14B | 37.9% | 27.0% | 65.0% | 74.1% | 69.7% |
+| **Qwen2.5-14B-Instruct** | 14B | 39.2% | 27.4% | 76.7% | 69.2% | 92.0% |
 
-*MCQ benchmarks (PACUTE, Hierarchical, LangGame): 25% = random baseline (4 options). CUTE and Math: contains-match accuracy. Evaluation in progress (~28 models remaining).*
+*MCQ benchmarks (PACUTE, Hierarchical, LangGame): 25% = random baseline (4 options). CUTE and Math: contains-match accuracy. Evaluation in progress.*
 
 ---
 
