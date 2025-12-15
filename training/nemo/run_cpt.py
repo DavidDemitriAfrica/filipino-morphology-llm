@@ -167,7 +167,7 @@ def parse_args():
     parser.add_argument(
         "--val-check-interval",
         type=int,
-        default=50,
+        default=500,  # Match checkpoint interval to avoid frequent saves
         help="Run validation every N steps",
     )
     
