@@ -307,7 +307,7 @@ results = evaluate_model(model_name="gpt2", benchmarks=["pacute"])
 
 ## Baseline Results (Pretrained Models)
 
-Results on 31 pretrained models before Filipino CPT, sorted by PACUTE accuracy:
+Results on 32 pretrained models before Filipino CPT, sorted by PACUTE accuracy:
 
 | Model | Type | PACUTE | Hier. | LangGame | CUTE | Math |
 |-------|------|--------|-------|----------|------|------|
@@ -317,6 +317,7 @@ Results on 31 pretrained models before Filipino CPT, sorted by PACUTE accuracy:
 | **Qwen2.5-7B** | PT | 39.6% | 28.0% | 63.5% | 65.1% | 53.6% |
 | **Qwen2.5-14B-Instruct** | IT | 39.2% | 27.4% | 76.7% | 69.2% | 92.0% |
 | **Qwen2.5-14B** | PT | 37.9% | 27.0% | 65.0% | 74.1% | 69.7% |
+| **Gemma-2-9B** | PT | 37.9% | 27.4% | 57.6% | 68.1% | 98.1% |
 | **LLaMA-3.1-8B-Instruct** | IT | 37.2% | 27.5% | 62.2% | 69.4% | 97.5% |
 | **SEA-LION-Gemma-v3-9B** | PT | 36.3% | 27.9% | 45.6% | 60.4% | 97.6% |
 | **LLaMA-3.1-8B** | PT | 35.5% | 27.4% | 38.9% | 68.2% | 94.9% |
@@ -338,19 +339,57 @@ Results on 31 pretrained models before Filipino CPT, sorted by PACUTE accuracy:
 | **Qwen2.5-1.5B-Instruct** | IT | 28.2% | 27.7% | 42.3% | 39.0% | 62.4% |
 | **Gemma-2B** | PT | 27.8% | 26.2% | 32.1% | 50.6% | 91.6% |
 | **Qwen2.5-0.5B** | PT | 27.6% | 27.9% | 36.2% | 30.2% | 19.0% |
-| **GPT-2-xl** | PT | 25.9% | 25.7% | 26.4% | 28.4% | 0.0% |
-| **GPT-2-large** | PT | 23.5% | 28.0% | 25.0% | 30.3% | 0.0% |
-| **GPT-2-medium** | PT | 23.1% | 28.0% | 24.9% | 20.4% | 0.0% |
-| **GPT-2** | PT | 22.6% | 28.9% | 24.5% | 23.2% | 0.0% |
+| **GPT-2-xl** | PT | 25.9% | 25.7% | 26.4% | 28.4% | - |
+| **GPT-2-large** | PT | 23.5% | 28.0% | 25.0% | 30.3% | - |
+| **GPT-2-medium** | PT | 23.1% | 28.0% | 24.9% | 20.4% | - |
+| **GPT-2** | PT | 22.6% | 28.9% | 24.5% | 23.2% | - |
 
 **Key Findings:**
 - **SEA-LION models excel on Filipino morphology** - trained on Southeast Asian languages including Filipino
 - **PACUTE scales with model size** - 22.6% (GPT-2 124M) → 43.7% (SEA-LION 9B)
 - **Hierarchical remains flat** - ~26-29% across all models (near 25% random baseline)
 - **LangGame shows strong scaling** - 24.5% → 80.4%
-- **Math: LLaMA/SEA-LION dominate** - 90%+ vs GPT-2's 0%
+- **Math: LLaMA/SEA-LION/Gemma dominate** - 90%+ vs GPT-2's 0%
+- **Gemma-2-9B added** - Strong baseline at 37.9% PACUTE, 98.1% Math
 
 *MCQ benchmarks (PACUTE, Hierarchical, LangGame): 25% = random baseline (4 options). CUTE and Math: contains-match accuracy.*
+
+### Performance Visualizations
+
+#### Top Models on Filipino Morphology (PACUTE)
+<p align="center">
+  <img src="docs/images/top_models_pacute.png" alt="Top 10 Models on PACUTE" width="700">
+</p>
+
+Instruct-tuned models generally outperform base models on Filipino morphological understanding, with SEA-LION models showing particularly strong performance due to their Southeast Asian language training data.
+
+#### Model Size vs Performance
+<p align="center">
+  <img src="docs/images/size_vs_performance.png" alt="Model Size vs Performance" width="700">
+</p>
+
+Performance on PACUTE scales with model size, though regional models (SEA-LION) punch above their weight class compared to general-purpose models like LLaMA and GPT-2.
+
+#### Model Family Comparison
+<p align="center">
+  <img src="docs/images/family_comparison.png" alt="Model Family Comparison" width="700">
+</p>
+
+Average performance by model family across all benchmarks. SEA-LION and Qwen2.5 families show the strongest overall performance.
+
+#### Performance Heatmap
+<p align="center">
+  <img src="docs/images/heatmap.png" alt="Full Results Heatmap" width="600">
+</p>
+
+Complete results across all 32 models and 4 benchmarks. Darker colors indicate higher accuracy.
+
+#### Benchmark Comparison (Top 15 Models)
+<p align="center">
+  <img src="docs/images/benchmark_comparison.png" alt="Benchmark Comparison" width="700">
+</p>
+
+Head-to-head comparison across benchmarks for the top 15 performing models.
 
 ---
 
