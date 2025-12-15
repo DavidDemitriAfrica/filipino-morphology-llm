@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Research project testing whether **morpheme-aware tokenization** improves LLM performance on Filipino morphological tasks. Compares three tokenization approaches (Baseline BPE, Stochastok expansion, Patok affix-aware) on Gemma 3 1B using SEA-PILE v2 Filipino corpus (7.4GB) and 15,023 morphological evaluation tasks.
+Research project testing whether **morpheme-aware tokenization** improves LLM performance on Filipino morphological tasks. Compares three tokenization approaches (Baseline BPE, Stochastok expansion, Patok affix-aware) on Gemma 2 2B using SEA-PILE v2 Filipino corpus (7.4GB) and 15,023 morphological evaluation tasks.
 
 ## Common Development Commands
 
@@ -12,39 +12,51 @@ Research project testing whether **morpheme-aware tokenization** improves LLM pe
 ```bash
 # Configure environment variables
 cp .env.example .env
-nano .env  # Add: HF_TOKEN, WANDB_API_KEY, ENROOT_PATH, BIND_MOUNTS
+nano .env  # Add: HF_TOKEN, WANDB_API_KEY, container paths
 source .env
 
-# Install NeMo container (~15 minutes)
-bash training/nemo/setup/setup_enroot.sh
+# Option A: Docker (recommended for cloud/local)
+docker pull nvcr.io/nvidia/nemo:24.07
+# Creates run_in_docker.sh automatically
 
-# Verify installation
+# Option B: Enroot (recommended for HPC clusters)
+bash training/nemo/setup/setup_enroot.sh
 enroot list | grep nemo_framework
 ./run_in_enroot.sh python -c "import nemo; print(nemo.__version__)"
+
+# Option C: Singularity/Apptainer (alternative HPC)
+bash training/nemo/setup/setup_singularity.sh
 ```
 
 ### Data Preprocessing
 ```bash
-# Test preprocessing single chunk first
-qsub jobs/preprocess_test_chunk1.pbs
+# Download corpus
+python scripts/download_seapile.py
 
-# Full parallel preprocessing (20x faster)
-qsub -J 1-20 jobs/preprocess_data_parallel.pbs
+# Batch preprocessing scripts (parallel, ~1hr each)
+bash scripts/preprocess_all_vanilla.sh     # Baseline BPE
+bash scripts/preprocess_all_stochastok.sh  # Stochastok expansion (~10%)
+bash scripts/preprocess_all_patok.sh       # Patok morphology-aware (30%+30%)
 
-# Monitor progress
-qstat -t
+# Or use PBS jobs for individual chunks
+qsub jobs/preprocess_test_chunk1.pbs      # Test single chunk first
+qsub -J 1-20 jobs/preprocess_data_parallel.pbs  # Full parallel processing
 
 # Verify outputs
-ls -lh data/processed/*.bin | wc -l  # Should show 20
+ls -lh data/processed/*.bin | wc -l  # Should show preprocessed chunks
 ```
 
 ### Training
 ```bash
-# Quick test (10 steps)
-qsub jobs/run_cpt_test.pbs
+# Quick test (10-100 steps) - Docker
+./run_in_docker.sh python training/nemo/run_cpt.py --max-steps 100
 
-# Full training
-qsub jobs/run_cpt.pbs
+# Quick test - Enroot
+./run_in_enroot.sh python training/nemo/run_cpt.py --max-steps 100
+
+# Full training via PBS
+qsub jobs/run_cpt_test.pbs  # Test first
+qsub jobs/run_cpt.pbs       # Full training
 
 # Custom hyperparameters
 qsub -v MAX_STEPS=5000,GBS=512,LR=5e-5 jobs/run_cpt.pbs
@@ -59,11 +71,20 @@ tail -f nemo_experiments/<experiment_name>/nemo_log_globalrank-0_localrank-0.txt
 # Generate all benchmarks
 python scripts/generate_benchmarks.py
 
-# Evaluate model
+# Evaluate single model
 python scripts/run_evaluation.py --models gpt2 --benchmarks pacute
 
 # Evaluate specific format (MCQ or GEN)
 python scripts/run_evaluation.py --models gpt2 --eval-mode mcq
+
+# Full evaluation suite
+bash scripts/run_full_evaluation.sh
+
+# Analyze results
+python scripts/analyze_inference_results.py
+
+# Create visualizations
+python scripts/create_visualizations.py
 
 # View results
 cat results/benchmark_evaluation/*.json
@@ -88,19 +109,25 @@ pytest tests/ -v
 The core innovation is comparing three tokenization approaches:
 
 1. **Baseline (Vanilla BPE)**: Standard tokenization using HuggingFace tokenizers
-2. **Stochastok**: Stochastic token expansion (~10%) - randomly splits tokens into subword units during training
+2. **Stochastok**: Stochastic token expansion (~10%) - randomly splits tokens into subword units
 3. **Patok**: Affix-aware expand-contract (30%+30%) - preferentially splits/merges at morpheme boundaries
 
 **Key Files:**
 - `src/tokenization/base_processor.py` - Base class for tokenization processors
 - `src/tokenization/stochastok_processor.py` - Implements stochastic expansion
-- `src/tokenization/patok_processor.py` - Implements affix-aware processing with Filipino morphology
-- `src/tokenization/patok_morphology.py` - Filipino affix detection and morpheme boundary identification
+- `src/tokenization/patok_morphology.py` - Filipino affix detection and morpheme boundary identification (RECOMMENDED)
+- `src/tokenization/patok_processor.py` - DEPRECATED - use patok_morphology.py instead
+- `src/tokenization/affix_decomposition.py` - Affix decomposition utilities
 
 **Critical Implementation Detail**: Tokenization processors apply DURING preprocessing, not during model training. The `preprocess_data.py` script uses these processors to create different versions of the training data:
-- Vanilla: `data/processed/google-gemma-3-1b-pt/`
-- Stochastok: `data/processed/google-gemma-3-1b-pt_stochastok_0.1/`
-- Patok: `data/processed/google-gemma-3-1b-pt_patok/` (future work)
+- Vanilla: `data/processed/vanilla/chunk_*.bin`
+- Stochastok: `data/processed/stochastok/chunk_*.bin`
+- Patok: `data/processed/patok/chunk_*.bin`
+
+**Preprocessing Scripts**: Three batch preprocessing scripts automate the full preprocessing workflow:
+- `scripts/preprocess_all_vanilla.sh` - Processes all chunks with vanilla tokenization
+- `scripts/preprocess_all_stochastok.sh` - Processes with stochastic expansion
+- `scripts/preprocess_all_patok.sh` - Processes with morphology-aware tokenization
 
 ### Training Architecture
 
@@ -113,14 +140,21 @@ Training uses **NeMo Framework 2.1+** which requires:
 - `training/nemo/run_cpt.py` - Main CPT training script using NeMo 2.0 API
 - `training/nemo/data/preprocess_data.py` - Converts JSONL → Megatron binary format
 - `training/nemo/data/split_jsonl.py` - Splits large corpus into chunks for parallel preprocessing
+- `scripts/convert_hf_to_nemo.py` - Converts HuggingFace checkpoints to NeMo format for distributed training
+- `scripts/run_cpt_training.sh` - Wrapper script for training with different tokenization modes
 
-**Critical Architecture Decision**: NeMo 2.0 uses a different API than NeMo 1.x:
+**Critical Architecture Decision**: NeMo 2.0+ uses a different API than NeMo 1.x:
 - Uses `nemo.collections.llm` package (not `nemo_nlp`)
-- Model definition via `llm.GemmaConfig3()` and `llm.GemmaModel3()`
+- Model definition via `llm.GemmaConfig2()` and `llm.GemmaModel2()`
 - Training via `nl.Trainer()` with strategy="ddp"
 - Data loading via `PreTrainingDataModule` expecting Megatron format
 
-**Gemma3 Monkey Patch**: The codebase includes a critical monkey patch for `Gemma3SelfAttention.forward()` to accept `rotary_pos_cos_sin` parameter that gets passed by transformer layer but isn't in the original signature. This is applied in `training/nemo/run_cpt.py` lines 62-106. See `docs/GEMMA3_MONKEY_PATCH.md` for details.
+**Distributed Training**: For multi-GPU training, HF checkpoints must be pre-converted to NeMo format:
+```bash
+./run_in_docker.sh python scripts/convert_hf_to_nemo.py --model google/gemma-2-2b
+./run_in_docker.sh torchrun --nproc_per_node=8 training/nemo/run_cpt.py \
+    --resume-from /workspace/checkpoints/nemo/google_gemma-2-2b
+```
 
 ### Evaluation Architecture
 
@@ -149,12 +183,16 @@ Evaluation uses a **hierarchical diagnostic framework** to identify where models
 
 **Key Files:**
 - `src/evaluation/loaders/` - Benchmark loading (pacute.py, hierarchical.py, etc.)
+- `src/evaluation/loaders/registry.py` - Registry pattern with EVALS_DICT
 - `src/evaluation/datasets/generators/` - Generate benchmark tasks
 - `src/evaluation/evaluators/` - Evaluation logic (MCQ vs GEN)
 - `scripts/generate_benchmarks.py` - Generate all benchmark JSONL files
 - `scripts/run_evaluation.py` - Run evaluation on models
+- `scripts/run_full_evaluation.sh` - Comprehensive evaluation workflow
+- `scripts/analyze_inference_results.py` - Analyze evaluation outputs
+- `scripts/create_visualizations.py` - Generate performance visualizations
 
-**Critical Evaluation Pattern**: Each benchmark supports filtering by evaluation mode via `--eval-mode mcq|gen|both`. Generators create both MCQ and GEN versions with task IDs linking equivalent questions.
+**Critical Evaluation Pattern**: Each benchmark supports filtering by evaluation mode via `--eval-mode mcq|gen|both`. Generators create both MCQ and GEN versions with task IDs linking equivalent questions. The `EVALS_DICT` in `src/evaluation/loaders/registry.py` maps benchmark names to loaders.
 
 ### PBS Job System
 
@@ -176,15 +214,21 @@ This `.env` file is sourced by PBS jobs and provides configuration to the contai
 
 ### Container Architecture
 
-Two container runtimes supported (Enroot preferred):
+Three container runtimes supported:
 
-**Enroot** (Recommended):
+**Docker** (Recommended for cloud/local):
+- Uses Docker runtime with `nvidia-docker` or Docker with GPU support
+- Container run via `./run_in_docker.sh` wrapper script
+- GPU access via `--gpus all` flag
+- Most portable and widely supported
+
+**Enroot** (Recommended for HPC):
 - Uses `.sqsh` (squashfs) images stored at `$ENROOT_PATH`
 - Container managed via `enroot` commands
 - Executed via `./run_in_enroot.sh` wrapper script
 - GPU access automatic (no special flags needed)
 
-**Singularity/Apptainer** (Alternative):
+**Singularity/Apptainer** (Alternative HPC):
 - Uses `.sif` (Singularity Image Format) files
 - Executed via `./run_in_singularity.sh` with `--nv` flag for GPU
 - Container stored at `$CONTAINER_CACHEDIR`
@@ -205,21 +249,19 @@ Two container runtimes supported (Enroot preferred):
 ### Tokenization Processor Pattern
 All tokenization processors inherit from `TokenizerProcessor` base class:
 ```python
-class PatokProcessor(TokenizerProcessor):
-    def __init__(self, tokenizer, expand_prop=0.3, contract_prop=0.3, affix_preference=0.7):
-        super().__init__(tokenizer)
-        self.set_expansions()
-        self.set_contractions()
-        self.load_affixes(affixes_file)
+class MorphologyAwarePatokProcessor:
+    def __init__(self, tokenizer, prefix_file, infix_file, suffix_file,
+                 expand_prop=0.1, contract_prop=0.9, affix_awareness=0.95):
+        self.tokenizer = tokenizer
+        self.affixes = self._build_affix_list()
+        self.affix_finder = self._build_affix_finder(self.affixes)  # Aho-Corasick automaton
 
-    def expand(self, token_ids, expand_prop, max_num_to_expand, disable_tqdm):
-        # Split tokens at morpheme boundaries
-
-    def contract(self, token_ids, contract_prop, max_num_to_contract, disable_tqdm):
-        # Merge tokens respecting morpheme boundaries
+    def contract_expand(self, token_ids, contract_prop, expand_prop):
+        # Contract: merge tokens respecting morpheme boundaries
+        # Expand: split tokens at morpheme boundaries
 ```
 
-Processors are applied DURING preprocessing, not during training.
+Processors are applied DURING preprocessing, not during training. They use **Aho-Corasick automaton** for efficient affix detection.
 
 ### Benchmark Generator Pattern
 Benchmark generators follow consistent structure:
@@ -243,15 +285,21 @@ def generate_<benchmark_name>_benchmark(num_samples=1000, seed=42):
 All benchmarks saved as JSONL in `data/benchmarks/`.
 
 ### Evaluation Loader Pattern
-Benchmark loaders registered via decorator:
+Benchmark loaders registered in `src/evaluation/loaders/registry.py`:
 ```python
-from evaluation.loaders.registry import register_loader
+from functools import partial
+from evaluation.loaders.pacute import load_pacute
 
-@register_loader("pacute")
-def load_pacute(benchmark_name, eval_mode="both", max_samples=None):
-    """Load PACUTE benchmark variants with format filtering."""
-    # Load MCQ and/or GEN versions based on eval_mode
-    return tasks
+EVALS_DICT = {
+    "pacute": partial(load_pacute, split="test"),
+    "pacute-mcq": partial(load_pacute, split="test"),
+    "pacute-gen": partial(load_pacute, split="test", format="gen"),
+    "pacute-affixation": partial(load_pacute, split="test", categories=["affixation"]),
+    # ... more variants
+}
+
+def load_benchmark(benchmark_name):
+    return EVALS_DICT[benchmark_name]()
 ```
 
 This allows `run_evaluation.py` to dynamically load benchmarks via `load_benchmark(name)`.
@@ -266,9 +314,11 @@ This allows `run_evaluation.py` to dynamically load benchmarks via `load_benchma
 
 ### Container Workflow Requirements
 - **NEVER** run preprocessing on login node (needs container)
-- **ALWAYS** source `.env` before submitting PBS jobs
-- **NEVER** commit generated helper scripts (`run_in_enroot.sh`, `run_in_singularity.sh`)
-- **ALWAYS** use PBS jobs for preprocessing and training (not interactive)
+- **ALWAYS** source `.env` before submitting PBS jobs or running container scripts
+- **NEVER** commit generated helper scripts (`run_in_docker.sh`, `run_in_enroot.sh`, `run_in_singularity.sh`)
+- **ALWAYS** use PBS jobs for preprocessing and training on HPC (not interactive)
+- **Docker** is preferred for cloud/local development
+- **Enroot** is preferred for HPC clusters
 
 ### Security Requirements
 - **NEVER** commit `.env` file (use `.env.example` for templates)
@@ -289,27 +339,45 @@ filipino-morphology-llm/
 │   ├── tokenization/            # Tokenization processors
 │   │   ├── base_processor.py
 │   │   ├── stochastok_processor.py
-│   │   └── patok_processor.py
-│   └── evaluation/              # Evaluation framework
-│       ├── loaders/             # Benchmark loaders (registry pattern)
-│       ├── datasets/generators/ # Task generators
-│       └── evaluators/          # Evaluation logic
+│   │   ├── patok_morphology.py  # RECOMMENDED
+│   │   ├── patok_processor.py   # DEPRECATED
+│   │   └── affix_decomposition.py
+│   ├── evaluation/              # Evaluation framework
+│   │   ├── loaders/             # Benchmark loaders (registry pattern)
+│   │   │   ├── registry.py      # EVALS_DICT mapping
+│   │   │   ├── pacute.py
+│   │   │   ├── hierarchical.py
+│   │   │   └── ...
+│   │   ├── datasets/generators/ # Task generators
+│   │   └── evaluators/          # Evaluation logic
+│   └── analysis/                # Analysis tools
 ├── training/                     # Training implementations
-│   └── nemo/                    # NeMo Framework CPT
-│       ├── run_cpt.py           # Main training script
-│       ├── data/                # Data preprocessing
-│       │   ├── preprocess_data.py
-│       │   └── split_jsonl.py
-│       └── setup/               # Container setup
+│   ├── nemo/                    # NeMo Framework CPT (ACTIVE)
+│   │   ├── run_cpt.py           # Main training script
+│   │   ├── data/                # Data preprocessing
+│   │   │   ├── preprocess_data.py
+│   │   │   └── split_jsonl.py
+│   │   └── setup/               # Container setup
+│   └── stochastok/              # DEPRECATED - Legacy GPT-2 training
 ├── scripts/                      # Executable utilities
 │   ├── generate_benchmarks.py   # Generate evaluation datasets
-│   └── run_evaluation.py        # Run model evaluation
+│   ├── run_evaluation.py        # Run model evaluation
+│   ├── run_full_evaluation.sh   # Comprehensive evaluation
+│   ├── analyze_inference_results.py  # Analyze outputs
+│   ├── create_visualizations.py # Generate plots
+│   ├── convert_hf_to_nemo.py    # Convert HF → NeMo format
+│   ├── preprocess_all_vanilla.sh    # Batch preprocess vanilla
+│   ├── preprocess_all_stochastok.sh # Batch preprocess stochastok
+│   └── preprocess_all_patok.sh      # Batch preprocess patok
 ├── job_templates/               # PBS job templates (version-controlled)
 ├── jobs/                        # Generated PBS jobs (gitignored)
 ├── data/                        # Data files
 │   ├── benchmarks/             # Evaluation tasks (JSONL)
 │   ├── chunks/                 # Split training data
 │   ├── processed/              # Megatron binary format
+│   │   ├── vanilla/            # Baseline tokenization
+│   │   ├── stochastok/         # Stochastic expansion
+│   │   └── patok/              # Morphology-aware
 │   └── affixes/                # Filipino affix lists
 └── docs/                        # Documentation
 ```
@@ -317,63 +385,96 @@ filipino-morphology-llm/
 ## Common Development Workflows
 
 ### Adding a New Tokenization Method
-1. Create processor in `src/tokenization/<name>_processor.py` inheriting from `TokenizerProcessor`
-2. Implement `expand()` and optionally `contract()` methods
+1. Create processor in `src/tokenization/<name>_processor.py` (inherit from base if needed)
+2. Implement token expansion/contraction methods
 3. Add tokenization mode to `preprocess_data.py` argument parser
 4. Add conditional logic in `preprocess_data.py` to instantiate processor
-5. Test with single chunk preprocessing
-6. Generate full preprocessed dataset
-7. Train model with new tokenization
-8. Evaluate and compare results
+5. Create batch preprocessing script `scripts/preprocess_all_<name>.sh`
+6. Test with single chunk preprocessing
+7. Generate full preprocessed dataset
+8. Train model with new tokenization
+9. Evaluate and compare results
 
 ### Adding a New Benchmark
 1. Create generator in `src/evaluation/datasets/generators/<name>.py`
 2. Implement `generate_<name>_benchmark()` returning list of standardized tasks
-3. Add loader in `src/evaluation/loaders/<name>.py` with `@register_loader` decorator
-4. Add to `scripts/generate_benchmarks.py` generation workflow
-5. Test generation: `python scripts/generate_benchmarks.py --benchmarks <name>`
-6. Add to evaluation: modify `scripts/run_evaluation.py` benchmark list
-7. Run evaluation: `python scripts/run_evaluation.py --benchmarks <name>`
+3. Add loader in `src/evaluation/loaders/<name>.py`
+4. Register in `src/evaluation/loaders/registry.py` EVALS_DICT
+5. Add to `scripts/generate_benchmarks.py` generation workflow
+6. Test generation: `python scripts/generate_benchmarks.py --benchmarks <name>`
+7. Add to evaluation: modify `scripts/run_evaluation.py` or use existing framework
+8. Run evaluation: `python scripts/run_evaluation.py --benchmarks <name>`
 
 ### Debugging Training Issues
-1. Check container exists: `enroot list | grep nemo_framework`
+1. Check container exists: `enroot list | grep nemo_framework` or `docker images | grep nemo`
 2. Verify preprocessed data exists: `ls -lh data/processed/*.bin`
-3. Test interactively: `./run_in_enroot.sh python training/nemo/run_cpt.py --max-steps 10`
+3. Test interactively: `./run_in_docker.sh python training/nemo/run_cpt.py --max-steps 10`
 4. Check training logs: `tail -f nemo_experiments/<name>/nemo_log_*.txt`
 5. Monitor W&B dashboard for metrics
-6. Check for Gemma3 bugs: see `docs/GEMMA3_MONKEY_PATCH.md`
+6. For distributed training: ensure HF checkpoint converted to NeMo format first
 
 ### Comparing Tokenization Methods
 1. Preprocess same data with different modes (vanilla vs stochastok vs patok)
 2. Train models with same hyperparameters on each tokenized dataset
 3. Evaluate all models on same benchmarks
-4. Focus comparison on:
+4. Analyze results: `python scripts/analyze_inference_results.py`
+5. Create visualizations: `python scripts/create_visualizations.py`
+6. Focus comparison on:
    - PACUTE Affixation (morpheme understanding)
    - Hierarchical Level 2 (morpheme decomposition bottleneck)
    - PACUTE Manipulation (character operations)
-5. Expected improvements: Patok > Stochastok > Baseline
+7. Expected improvements: Patok > Stochastok > Baseline
+
+### Full Experiment Workflow
+```bash
+# 1. Preprocess data (all three tokenizations)
+bash scripts/preprocess_all_vanilla.sh
+bash scripts/preprocess_all_stochastok.sh
+bash scripts/preprocess_all_patok.sh
+
+# 2. Train models (submit PBS jobs or run locally)
+./run_in_docker.sh python training/nemo/run_cpt.py \
+    --data-path /workspace/data/processed/vanilla/chunk_001 \
+    --max-steps 5000
+
+# 3. Run full evaluation
+bash scripts/run_full_evaluation.sh
+
+# 4. Analyze results
+python scripts/analyze_inference_results.py
+python scripts/create_visualizations.py
+```
 
 ## Key Documentation References
 
-- `README.md` - Project overview, quick start, expected results
+- `README.md` - Project overview, quick start, baseline results, visualizations
 - `SETUP.md` - Complete environment setup and container installation
 - `docs/RESEARCH.md` - Research question, tokenization methods, experimental design
 - `docs/TRAINING.md` - Training workflows, PBS jobs, monitoring
 - `docs/EVALUATION.md` - Benchmark generation, evaluation procedures, analysis
 - `docs/GEMMA3_MONKEY_PATCH.md` - Known Gemma3 bugs and workarounds
+- `docs/BENCHMARK_FORMATS.md` - Benchmark format specifications (MCQ vs GEN)
 - `training/nemo/data/DATA_PREPROCESSING.md` - Data preprocessing guide
 - `job_templates/README.md` - PBS job template system
+- `docs/SECURITY.md` - Security best practices
 
 ## Model-Specific Notes
 
-### Gemma3 Issues
-- `Gemma3SelfAttention.forward()` signature mismatch requires monkey patch (applied automatically in `run_cpt.py`)
+### Gemma2 2B (Current Model)
+- Used for continued pretraining experiments
+- Requires conversion to NeMo format for distributed training: `scripts/convert_hf_to_nemo.py`
+- Config via `llm.GemmaConfig2()` in NeMo
+- Pre-tokenized with SentencePiece tokenizer
+
+### Gemma3 Issues (If Using)
+- `Gemma3SelfAttention.forward()` signature mismatch may require monkey patch
 - Gemma3 uses custom local/global RoPE, not standard rotary embeddings
 - See `docs/GEMMA3_MONKEY_PATCH.md` for full details and workarounds
+- NeMo 2.1+ has better Gemma3 support
 
-### NeMo 2.0 API Changes
+### NeMo 2.0+ API
 - Use `nemo.collections.llm` not `nemo.collections.nlp`
-- Model config via `llm.GemmaConfig3()` not YAML files
+- Model config via `llm.GemmaConfig2()` not YAML files
 - Trainer via `nl.Trainer()` with Lightning 2.0 API
 - Data module must be `PreTrainingDataModule` with Megatron format
 
@@ -382,3 +483,14 @@ filipino-morphology-llm/
 - Text key must match JSONL structure (default: "text")
 - Output prefix must NOT include `_text_document` suffix
 - Workers should be 64 for optimal parallel tokenization
+
+## Container Runtime Selection Guide
+
+| Environment | Recommended Runtime | Why |
+|-------------|-------------------|-----|
+| Cloud (AWS/GCP/Azure) | Docker | Most portable, standard |
+| Local workstation | Docker | Easy setup, widely supported |
+| HPC with Enroot | Enroot | Fast, no root needed, efficient |
+| HPC without Enroot | Singularity | Standard HPC container runtime |
+
+All three runtimes use the same NeMo container image but with different wrapper scripts.

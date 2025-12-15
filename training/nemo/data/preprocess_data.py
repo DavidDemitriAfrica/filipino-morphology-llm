@@ -128,6 +128,12 @@ def parse_args():
         help="Path to suffix file (patok mode only)",
     )
     parser.add_argument(
+        "--expansions-file",
+        type=str,
+        default=None,
+        help="Path to pre-built expansions JSON file (patok mode only, speeds up initialization)",
+    )
+    parser.add_argument(
         "--seed",
         type=int,
         default=42,
@@ -166,6 +172,7 @@ def main():
         print(f"Prefix file:         {args.prefix_file}")
         print(f"Infix file:          {args.infix_file}")
         print(f"Suffix file:         {args.suffix_file}")
+        print(f"Expansions file:     {args.expansions_file or '(will build from scratch)'}")
         print(f"Random seed:         {args.seed}")
     print("=" * 80)
     print()
@@ -517,6 +524,7 @@ def preprocess_patok(args, input_path):
             contract_prop=args.contract_prop,
             expand_prop=args.expand_prop,
             affix_awareness=args.affix_awareness,
+            expansions_file=args.expansions_file,
         )
         print(f"✓ MorphologyAwarePatokProcessor initialized")
         print(f"  Number of affix versions: {len(processor.affixes)}")

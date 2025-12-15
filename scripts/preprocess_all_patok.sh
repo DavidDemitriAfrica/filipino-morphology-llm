@@ -11,6 +11,7 @@ NEMO_IMAGE="nvcr.io/nvidia/nemo:24.07"
 CONTRACT_PROP=0.3
 EXPAND_PROP=0.3
 AFFIX_AWARENESS=0.95
+EXPANSIONS_FILE="/workspace/src/tokenization/expansions/expansions_gemma.json"
 HF_CACHE="/home/ubuntu/.cache/huggingface"
 
 # Create output directory
@@ -29,19 +30,20 @@ preprocess_chunk() {
         -v "$HF_CACHE:/root/.cache/huggingface" \
         -e HF_HOME=/root/.cache/huggingface \
         "$NEMO_IMAGE" \
-        python /workspace/training/nemo/data/preprocess_data.py \
-            --input "$INPUT_DIR/$chunk_file" \
-            --output-prefix "$OUTPUT_DIR/$output_prefix" \
-            --tokenizer-model "$TOKENIZER_MODEL" \
-            --hf-tokenizer "$HF_TOKENIZER" \
+        bash -c "pip install -q pyahocorasick tiktoken && python /workspace/training/nemo/data/preprocess_data.py \
+            --input $INPUT_DIR/$chunk_file \
+            --output-prefix $OUTPUT_DIR/$output_prefix \
+            --tokenizer-model $TOKENIZER_MODEL \
+            --hf-tokenizer $HF_TOKENIZER \
             --tokenization-mode patok \
             --contract-prop $CONTRACT_PROP \
             --expand-prop $EXPAND_PROP \
             --affix-awareness $AFFIX_AWARENESS \
+            --expansions-file $EXPANSIONS_FILE \
             --prefix-file /workspace/src/tokenization/affixes/prefix.txt \
             --infix-file /workspace/src/tokenization/affixes/infix.txt \
             --suffix-file /workspace/src/tokenization/affixes/suffix.txt \
-            --workers 32 > /tmp/preprocess_patok_${chunk_num}.log 2>&1
+            --workers 32" > /tmp/preprocess_patok_${chunk_num}.log 2>&1
 
     if [ $? -eq 0 ]; then
         echo "[$(date '+%H:%M:%S')] Patok chunk $chunk_num completed"
@@ -52,13 +54,14 @@ preprocess_chunk() {
 }
 
 export -f preprocess_chunk
-export WORKSPACE TOKENIZER_MODEL HF_TOKENIZER INPUT_DIR OUTPUT_DIR NEMO_IMAGE CONTRACT_PROP EXPAND_PROP AFFIX_AWARENESS HF_CACHE
+export WORKSPACE TOKENIZER_MODEL HF_TOKENIZER INPUT_DIR OUTPUT_DIR NEMO_IMAGE CONTRACT_PROP EXPAND_PROP AFFIX_AWARENESS EXPANSIONS_FILE HF_CACHE
 
 echo "=========================================="
 echo "Starting patok preprocessing (20 chunks)"
 echo "Parallel batches of 4"
 echo "Contract: $CONTRACT_PROP, Expand: $EXPAND_PROP"
 echo "Affix awareness: $AFFIX_AWARENESS"
+echo "Expansions file: $EXPANSIONS_FILE"
 echo "=========================================="
 echo "Start time: $(date)"
 echo ""

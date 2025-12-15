@@ -1,36 +1,31 @@
 #!/usr/bin/env python3
 """
-Continued Pretraining of Gemma 3 1B using NeMo Framework Container.
+Continued Pretraining of Gemma 2 2B using NeMo Framework Container.
 
 This script is designed to run INSIDE the NeMo Framework container.
-It uses NeMo 2.0 API for a 100-step CPT run on SEA-PILE data.
+It uses NeMo 2.0 API for CPT on SEA-PILE Filipino data.
 
-Container setup (choose one):
-    # Singularity/Apptainer:
-    source .env
-    bash setup_singularity.sh /scratch/$USER/container_cache
-    
-    # Enroot:
-    source .env
-    bash setup_enroot.sh
+IMPORTANT: For distributed training, pre-convert the HF checkpoint first:
+    ./run_in_docker.sh python scripts/convert_hf_to_nemo.py --model google/gemma-2-2b
 
-Run inside container (choose one):
-    # Singularity/Apptainer:
-    ./run_in_singularity.sh python scripts/run_cpt_gemma3_1b_container.py --max-steps 100
-    
-    # Enroot:
-    ./run_in_enroot.sh python scripts/run_cpt_gemma3_1b_container.py --max-steps 100
+Then run training with the pre-converted checkpoint:
+    ./run_in_docker.sh torchrun --nproc_per_node=8 training/nemo/run_cpt.py \
+        --resume-from /workspace/checkpoints/nemo/google_gemma-2-2b \
+        --data-path /workspace/data/processed/vanilla/chunk_001_text_document ...
 
-Submit via SLURM (must run through container):
-    # The SLURM job scripts use the container runtime internally
-    qsub jobs/submit_cpt_singularity.sh  # Uses Singularity/Apptainer
-    qsub jobs/submit_cpt_enroot.sh       # Uses Enroot
+Usage:
+    ./run_in_docker.sh torchrun --nproc_per_node=8 training/nemo/run_cpt.py --max-steps 100
 """
 
 import argparse
 import os
 import sys
 from pathlib import Path
+
+# Prevent cache conflicts in distributed mode
+os.environ.setdefault("TORCH_HOME", "/workspace/.cache/torch")
+os.environ.setdefault("HF_HOME", "/workspace/.cache/huggingface")
+os.environ.setdefault("TRANSFORMERS_CACHE", "/workspace/.cache/huggingface")
 
 # Verify we're in the container environment
 try:
@@ -51,82 +46,14 @@ except ImportError as e:
     sys.exit(1)
 
 
-# ============================================================================
-# MONKEY-PATCH: Fix Gemma3SelfAttention.forward() signature
-# ============================================================================
-# This fixes the issue where Gemma3SelfAttention.forward() doesn't accept
-# the rotary_pos_cos_sin parameter that gets passed by the transformer layer.
-# See: https://github.com/NVIDIA/NeMo/pull/14862
-# ============================================================================
-
-print("Applying Gemma3SelfAttention monkey-patch for rotary_pos_cos_sin parameter...")
-
-try:
-    from nemo.collections.llm.gpt.model.gemma3 import Gemma3SelfAttention
-    
-    # Store the original forward method
-    _original_gemma3_forward = Gemma3SelfAttention.forward
-    
-    # Create a wrapper that accepts rotary_pos_cos_sin but ignores it
-    def patched_gemma3_forward(
-        self,
-        hidden_states,
-        attention_mask,
-        key_value_states=None,
-        inference_context=None,
-        rotary_pos_emb=None,
-        rotary_pos_cos=None,
-        rotary_pos_sin=None,
-        rotary_pos_cos_sin=None,  # <-- Accept but ignore (Gemma3 uses custom RoPE)
-        attention_bias=None,
-        packed_seq_params=None,
-        position_ids=None,  # <-- Accept but ignore (not used by Gemma3)
-        sequence_len_offset=None,
-        *args,
-        **kwargs
-    ):
-        """
-        Patched forward method that accepts rotary_pos_cos_sin and position_ids.
-        
-        Gemma3 uses custom local/global RoPE and doesn't need the combined
-        rotary_pos_cos_sin tensor or position_ids, so we ignore them.
-        """
-        # Call the original forward with only the parameters it expects
-        return _original_gemma3_forward(
-            self,
-            hidden_states=hidden_states,
-            attention_mask=attention_mask,
-            key_value_states=key_value_states,
-            inference_context=inference_context,
-            rotary_pos_emb=rotary_pos_emb,
-            rotary_pos_cos=rotary_pos_cos,
-            rotary_pos_sin=rotary_pos_sin,
-            attention_bias=attention_bias,
-            packed_seq_params=packed_seq_params,
-            sequence_len_offset=sequence_len_offset,
-            *args,
-            **kwargs
-        )
-    
-    # Apply the monkey-patch
-    Gemma3SelfAttention.forward = patched_gemma3_forward
-    print("✓ Gemma3SelfAttention monkey-patch applied successfully!")
-    
-except ImportError as e:
-    print(f"⚠  Warning: Could not apply Gemma3SelfAttention monkey-patch: {e}")
-    print("   If you're not using Gemma3, this is fine.")
-except Exception as e:
-    print(f"✗ Error applying Gemma3SelfAttention monkey-patch: {e}")
-    print("   Training may fail if using Gemma3 model.")
-
-# ============================================================================
-# END MONKEY-PATCH
-# ============================================================================
+# Note: Gemma3 monkey-patch removed since NeMo 2.0.0rc1 doesn't support Gemma3
+# Use NeMo 2.1+ container for Gemma3 support
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Continued pretraining of Gemma 3 1B in NeMo container"
+        description="Continued pretraining of Gemma 2 2B in NeMo container",
+        allow_abbrev=False  # Prevent argument abbreviation conflicts with torchrun
     )
     
     # Data arguments
@@ -206,8 +133,8 @@ def parse_args():
     parser.add_argument(
         "--resume-from",
         type=str,
-        default="google/gemma-3-1b-pt",
-        help="HuggingFace model ID to resume from (default: google/gemma-3-1b-pt, set to empty string to train from scratch)",
+        default="",
+        help="Path to pre-converted NeMo checkpoint (use scripts/convert_hf_to_nemo.py first). Empty = train from scratch.",
     )
     
     # Logging arguments
@@ -244,7 +171,18 @@ def parse_args():
         help="Run validation every N steps",
     )
     
-    return parser.parse_args()
+    args, unknown = parser.parse_known_args()
+    if unknown:
+        # Filter out empty strings from unknown args (torchrun artifact)
+        unknown_filtered = [u for u in unknown if u.strip()]
+        if unknown_filtered:
+            print(f"Note: Ignoring unknown arguments: {unknown_filtered}")
+
+    # Filter out empty strings from data_path (torchrun artifact)
+    if args.data_path:
+        args.data_path = [p for p in args.data_path if p.strip()]
+
+    return args
 
 
 def setup_wandb(args):
@@ -318,13 +256,19 @@ def main():
     print("Setting up WandB logger...")
     wandb_logger = setup_wandb(args)
     
-    # Configure the data module
+    # Configure the data module with Gemma tokenizer
+    # The data was preprocessed with Gemma tokenizer, so we must use the same tokenizer
     print(f"Configuring data module with {len(verified_paths)} data path(s)...")
+    print("Loading Gemma 2 tokenizer via NeMo wrapper...")
+    from nemo.collections.common.tokenizers.huggingface.auto_tokenizer import AutoTokenizer as NeMoAutoTokenizer
+    nemo_tokenizer = NeMoAutoTokenizer("google/gemma-2-2b")
+
     data = PreTrainingDataModule(
         paths=verified_paths,  # Use the preprocessed data prefix(es) (without .bin/.idx)
         seq_length=args.seq_length,
         global_batch_size=args.global_batch_size,
         micro_batch_size=args.micro_batch_size,
+        tokenizer=nemo_tokenizer,  # Use NeMo-wrapped Gemma tokenizer (matches preprocessing)
         num_workers=4,
         # Better handling of sequences and document boundaries
         reset_position_ids=True,
@@ -376,7 +320,7 @@ def main():
             tensor_model_parallel_size=1,  # No model parallelism for 1B model
             pipeline_model_parallel_size=1,
             ddp=DistributedDataParallelConfig(
-                # Advanced DDP settings for better training stability
+                # DDP settings for training stability (NeMo 2.3.0rc0 dev)
                 check_for_nan_in_grad=True,
                 grad_reduce_in_fp32=True,  # Reduce gradients in FP32 for stability
                 overlap_grad_reduce=True,  # Overlap gradient reduction with computation
@@ -409,33 +353,33 @@ def main():
     print(f"Sequence length: {args.seq_length}")
     print("=" * 80 + "\n")
     
-    # Configure model
+    # Configure model (Gemma 2 2B - matches data tokenizer)
     print("Creating model from configuration...")
-    model = llm.Gemma3Model(
-        config=llm.Gemma3Config1B(seq_length=args.seq_length)
+    model = llm.Gemma2Model(
+        config=llm.Gemma2Config2B(
+            seq_length=args.seq_length,
+            vocab_size=256128,  # Gemma tokenizer vocab size
+        )
     )
-    
-    # Import weights from HuggingFace if specified
+
+    # Set up checkpoint resumption
+    # IMPORTANT: Use pre-converted NeMo checkpoint, NOT HuggingFace model ID
+    # Convert first with: ./run_in_docker.sh python scripts/convert_hf_to_nemo.py --model google/gemma-2-2b
     if args.resume_from:
-        try:
-            print(f"Importing checkpoint from HuggingFace: {args.resume_from}")
-            # Use NeMo's import_ckpt API to load HF weights
-            imported_path = llm.import_ckpt(
-                model=model,
-                source=f"hf://{args.resume_from}"
-            )
-            print(f"✓ Successfully imported weights from {args.resume_from}")
-            print(f"  Checkpoint saved to: {imported_path}")
-            # Now load the imported NeMo checkpoint into the model
+        resume_path = Path(args.resume_from)
+        if resume_path.exists():
+            print(f"✓ Resuming from pre-converted checkpoint: {args.resume_from}")
             resume_config = nl.AutoResume(
-                resume_from_path=str(imported_path),
+                resume_from_path=str(resume_path),
                 resume_if_exists=True,
             )
-        except Exception as e:
-            print(f"Warning: Could not import HF checkpoint: {e}")
-            print("Continuing with randomly initialized weights...")
-            resume_config = None
+        else:
+            print(f"✗ Error: Checkpoint path does not exist: {args.resume_from}")
+            print("\nTo convert a HuggingFace checkpoint, run:")
+            print("  ./run_in_docker.sh python scripts/convert_hf_to_nemo.py --model google/gemma-2-2b")
+            sys.exit(1)
     else:
+        print("Training from scratch (no checkpoint specified)")
         resume_config = None
     
     llm.train(
