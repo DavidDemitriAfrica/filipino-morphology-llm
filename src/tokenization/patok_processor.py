@@ -17,9 +17,9 @@ Migration:
     from src.tokenization.patok_morphology import MorphologyAwarePatokProcessor
     processor = MorphologyAwarePatokProcessor(
         tokenizer,
-        prefix_file='src/tokenization/affixes/prefix.txt',
-        infix_file='src/tokenization/affixes/infix.txt',
-        suffix_file='src/tokenization/affixes/suffix.txt',
+        prefix_file='data/affixes_filipino/prefix.txt',
+        infix_file='data/affixes_filipino/infix.txt',
+        suffix_file='data/affixes_filipino/suffix.txt',
     )
     token_ids = processor.contract_expand(token_ids)
 

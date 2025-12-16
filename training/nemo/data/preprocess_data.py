@@ -112,19 +112,19 @@ def parse_args():
     parser.add_argument(
         "--prefix-file",
         type=str,
-        default="/workspace/src/tokenization/affixes/prefix.txt",
+        default="/workspace/data/affixes_filipino/prefix.txt",
         help="Path to prefix file (patok mode only)",
     )
     parser.add_argument(
         "--infix-file",
         type=str,
-        default="/workspace/src/tokenization/affixes/infix.txt",
+        default="/workspace/data/affixes_filipino/infix.txt",
         help="Path to infix file (patok mode only)",
     )
     parser.add_argument(
         "--suffix-file",
         type=str,
-        default="/workspace/src/tokenization/affixes/suffix.txt",
+        default="/workspace/data/affixes_filipino/suffix.txt",
         help="Path to suffix file (patok mode only)",
     )
     parser.add_argument(
@@ -317,16 +317,20 @@ def preprocess_stochastok(args, input_path):
             subprocess.check_call([sys.executable, "-m", "pip", "install"] + missing_deps + ["-q"])
 
         # Add src to path for proper imports
-        sys.path.insert(0, "/workspace/src")
+        # Try workspace path first (container), fall back to relative path
+        workspace_src = Path("/workspace/src")
+        local_src = Path(__file__).parent.parent.parent.parent / "src"
+        src_path = workspace_src if workspace_src.exists() else local_src
+        sys.path.insert(0, str(src_path))
         from tokenization.stochastok_processor import StochastokProcessor
 
         processor = StochastokProcessor(tokenizer, expand_prop=args.expand_prop)
-        print(f"✓ StochastokProcessor initialized")
+        print(f"✓ StochastokProcessor initialized (using {src_path})")
         print(f"  Number of expandable tokens: {len(processor.expansions)}")
     except Exception as e:
         print(f"✗ Error initializing StochastokProcessor: {e}")
         print()
-        print("Make sure StochastokProcessor is available in /workspace/src/tokenization/")
+        print("Make sure StochastokProcessor is available in src/tokenization/")
         return 1
     
     print()
@@ -506,11 +510,14 @@ def preprocess_patok(args, input_path):
     try:
         import sys
         # Add src to path for proper imports
-        sys.path.insert(0, "/workspace/src")
+        # Try workspace path first (container), fall back to relative path
+        workspace_src = Path("/workspace/src")
+        local_src = Path(__file__).parent.parent.parent.parent / "src"
+        src_path = workspace_src if workspace_src.exists() else local_src
+        sys.path.insert(0, str(src_path))
         from tokenization.patok_morphology import MorphologyAwarePatokProcessor
 
         # Verify affix files exist
-        from pathlib import Path
         for affix_file in [args.prefix_file, args.infix_file, args.suffix_file]:
             if not Path(affix_file).exists():
                 print(f"✗ Error: Affix file not found: {affix_file}")
