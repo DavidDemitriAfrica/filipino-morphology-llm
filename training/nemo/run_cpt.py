@@ -304,12 +304,13 @@ def main():
     print(f"Checkpoints will be saved to: {args.checkpoint_dir}")
     checkpoint_callback = nl.ModelCheckpoint(
         save_top_k=-1,  # Keep all checkpoints (not just best)
-        monitor="val_loss",
-        save_last=False,  # Don't save last checkpoint separately
         every_n_train_steps=args.checkpoint_interval,
+        save_on_train_epoch_end=False,  # Save during training steps, not epoch end
         dirpath=args.checkpoint_dir,
-        # Note: train_time_interval conflicts with every_n_train_steps, use only one
-        filename="{val_loss:.2f}-{step}-{consumed_samples}",
+        # Note: No 'monitor' parameter - we save every N steps regardless of metric
+        # Simple filename without val_loss dependency
+        filename="step={step}-consumed={consumed_samples}",
+        verbose=True,  # Print when saving checkpoints
     )
     
     # Training configuration
@@ -318,6 +319,7 @@ def main():
         devices=args.devices,
         max_steps=args.max_steps,
         accelerator="gpu",
+        enable_checkpointing=True,  # Explicitly enable checkpointing
         strategy=nl.MegatronStrategy(
             tensor_model_parallel_size=1,  # No model parallelism for 1B model
             pipeline_model_parallel_size=1,
