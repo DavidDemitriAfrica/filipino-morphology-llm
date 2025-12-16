@@ -182,18 +182,33 @@ This will create a `.sif` file instead of `.sqsh` and use `run_in_singularity.sh
 
 ### 2.2. (Optional) Local preprocessing environment
 
-For data preprocessing and analysis (NOT training):
+For data preprocessing, analysis, and development (NOT training):
 
 ```bash
 # Create virtual environment
 python -m venv env
 source env/bin/activate
 
-# Install preprocessing tools only
+# Install preprocessing and development tools
 pip install -r requirements.txt
+
+# Install pre-commit hooks (for development)
+pip install pre-commit
+pre-commit install
 ```
 
-**Note**: Training must use the container. Local environment is only for data prep.
+**Note**: Training must use the NeMo container. Local environment is for:
+- Data preprocessing (`scripts/preprocess_*.sh`)
+- Benchmark generation (`scripts/generate_benchmarks.py`)
+- Analysis tools (`scripts/run_analysis.py`)
+- Development and testing
+
+**Development Standards:**
+- All imports use: `sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))`
+- Test files follow `test_*.py` naming convention
+- Pre-commit hooks enforce code formatting (Black, isort)
+- Affix files located in: `data/affixes_filipino/` (prefix.txt, infix.txt, suffix.txt)
+- Large expansion JSONs in: `data/expansions/` (gitignored, regenerate as needed)
 
 ---
 

@@ -11,7 +11,7 @@ NEMO_IMAGE="nvcr.io/nvidia/nemo:24.07"
 CONTRACT_PROP=0.3
 EXPAND_PROP=0.3
 AFFIX_AWARENESS=0.95
-EXPANSIONS_FILE="/workspace/src/tokenization/expansions/expansions_gemma.json"
+EXPANSIONS_FILE="/workspace/data/expansions/expansions_google-gemma-2b.json"
 HF_CACHE="/home/ubuntu/.cache/huggingface"
 
 # Create output directory

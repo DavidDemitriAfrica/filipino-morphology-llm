@@ -15,7 +15,16 @@ Usage:
     python scripts/generate_benchmarks.py
     python scripts/generate_benchmarks.py --benchmarks pacute hierarchical cute
 """
+from pathlib import Path
+import sys
+# Add src to path  
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root / 'src'))
 
+from pathlib import Path
+import sys
+# Add src to path  
+project_root = Path(__file__).parent.parent
 import sys
 import json
 import argparse
@@ -23,8 +32,6 @@ from pathlib import Path
 
 # Add src to path
 project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root / 'src'))
-
 
 def generate_pacute():
     """Generate PACUTE benchmarks."""
@@ -37,7 +44,6 @@ def generate_pacute():
     generate_pacute_main()
     print()
 
-
 def generate_hierarchical():
     """Generate hierarchical benchmarks."""
     print("=" * 80)
@@ -48,7 +54,6 @@ def generate_hierarchical():
     from evaluation.datasets.scripts.generate_hierarchical_benchmark import main as generate_hierarchical_main
     generate_hierarchical_main()
     print()
-
 
 def generate_langgame():
     """Generate LangGame dataset."""
@@ -67,7 +72,6 @@ def generate_langgame():
         print(f"  This dataset may require additional dependencies")
         print()
 
-
 def generate_math():
     """Generate multi-digit addition dataset."""
     print("=" * 80)
@@ -78,7 +82,6 @@ def generate_math():
     from evaluation.datasets.scripts.generate_math_benchmark import main as generate_math_main
     generate_math_main()
     print()
-
 
 def generate_cute():
     """Generate CUTE dataset."""
@@ -96,7 +99,6 @@ def generate_cute():
         print(f"  {e}")
         print(f"  This dataset requires the 'datasets' library")
         print()
-
 
 def add_ids_to_benchmarks():
     """Add unique IDs to all benchmark files."""
@@ -154,7 +156,6 @@ def add_ids_to_benchmarks():
             print(f"  ✗ {filepath.name} - Error: {e}")
     
     print()
-
 
 def main():
     parser = argparse.ArgumentParser(
@@ -240,6 +241,20 @@ def main():
             print(f"Warning: Failed to add IDs to benchmarks: {e}")
             print()
     
+    # Generate benchmark variants (MCQ <-> GEN conversions)
+    if success_count > 0:
+        try:
+            print("=" * 80)
+            print("Generating Benchmark Variants")
+            print("=" * 80)
+            print()
+            from evaluation.datasets.scripts.generate_benchmark_variants import main as generate_variants_main
+            generate_variants_main()
+            print()
+        except Exception as e:
+            print(f"Warning: Failed to generate benchmark variants: {e}")
+            print()
+    
     # Summary
     print("=" * 80)
     print("Generation Summary")
@@ -248,7 +263,6 @@ def main():
     if fail_count > 0:
         print(f"{fail_count} benchmarks failed")
     print("=" * 80)
-
 
 if __name__ == '__main__':
     main()

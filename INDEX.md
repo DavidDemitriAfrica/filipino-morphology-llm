@@ -18,8 +18,8 @@ Quick guide to all documentation in this repository.
 ## All Documentation
 
 ### Root Level
-- **[README.md](README.md)** - Project overview, quick start, repository structure
-- **[SETUP.md](SETUP.md)** - Complete environment setup guide
+- **[README.md](README.md)** - Project overview, quick start, repository structure, **development standards**
+- **[SETUP.md](SETUP.md)** - Complete environment setup guide, pre-commit hooks
 - **[INDEX.md](INDEX.md)** - This file
 
 ### Research & Methodology

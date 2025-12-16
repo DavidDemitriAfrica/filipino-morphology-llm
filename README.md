@@ -199,13 +199,14 @@ filipino-morphology-llm/
 │   └── stochastok/                 # ⚠️ DEPRECATED - Legacy GPT-2 training
 │       └── DEPRECATED.md           # See this file for details
 │
-├── scripts/                        # 🔧 Utility Scripts
+├── scripts/                        # 🔧 Workflow Scripts
 │   ├── generate_benchmarks.py      # Generate all evaluation benchmarks
-│   ├── run_evaluation.py           # Run model evaluation
+│   ├── run_evaluation.py           # Run model evaluation (CLI)
+│   ├── run_analysis.py             # Analysis tools (CLI)
 │   ├── run_full_evaluation.sh      # Comprehensive evaluation script
-│   ├── analyze_inference_results.py# Analyze evaluation outputs
+│   ├── build_tokenizer_expansions.py # Build tokenizer expansion files
 │   ├── download_seapile.py         # Download SEA-PILE corpus
-│   └── verify_setup.py             # Verify environment setup
+│   └── preprocess_all_*.sh         # Preprocessing workflows
 │
 ├── data/                           # 📊 Data Files
 │   ├── benchmarks/                 # Generated benchmarks (JSONL)
@@ -214,11 +215,13 @@ filipino-morphology-llm/
 │   │   ├── composition_mcq.jsonl
 │   │   ├── hierarchical_mcq.jsonl
 │   │   └── ...
-│   ├── affixes/                    # Filipino affix lists
-│   │   └── filipino_affixes.txt
+│   ├── affixes_filipino/           # Filipino affix lists (NEW location)
+│   │   ├── prefix.txt              # Prefix affixes
+│   │   ├── infix.txt               # Infix affixes
+│   │   └── suffix.txt              # Suffix affixes
+│   ├── expansions/                 # Tokenizer expansions (gitignored, large)
 │   ├── corpora/                    # Training corpora (gitignored)
 │   │   └── pacute_data/            # PACUTE source data
-│   ├── tokenizer_expansions/       # Cached tokenizer expansions
 │   ├── vocabularies/               # Tokenizer vocabularies
 │   └── word_frequencies.csv        # Filipino word frequencies
 │
@@ -240,12 +243,14 @@ filipino-morphology-llm/
 │   ├── create_composition_*.ipynb  # Composition/manipulation tasks
 │   └── diksiyonaryo.ipynb          # Dictionary exploration
 │
-├── tests/                          # 🧪 Test Files
-│   ├── test_affixation.py
-│   ├── test_composition.py
-│   ├── test_manipulation.py
-│   ├── test_syllabification.py
-│   └── test_patok_morphology.py
+├── tests/                          # 🧪 Test Files (test_*.py convention)
+│   ├── test_affixation.py          # Affixation task tests
+│   ├── test_composition.py         # Composition task tests
+│   ├── test_manipulation.py        # Manipulation task tests
+│   ├── test_syllabification.py     # Syllabification tests
+│   ├── test_patok_morphology.py    # Patok processor tests
+│   ├── test_stochastok_processor.py# Stochastok processor tests
+│   └── test_verify_setup.py        # Environment verification
 │
 └── results/                        # 📈 Evaluation Results (gitignored)
     └── <model_name>/
@@ -404,6 +409,68 @@ If you use this code or benchmarks, please cite:
   year={2025},
   url={https://github.com/DavidDemitriAfrica/filipino-morphology-llm}
 }
+```
+
+---
+
+## Development
+
+### Code Organization
+
+**Key File Locations (Updated Dec 2024):**
+- **Tokenization**: `src/tokenization/` - Base processor, Patok, Stochastok
+- **Evaluation**: `src/evaluation/` - Benchmarks, metrics, evaluators  
+- **Analysis**: `src/analysis/` - Inference analysis, visualizations
+- **Scripts**: `scripts/` - Workflow orchestration (generate, preprocess, evaluate)
+- **Tests**: `tests/test_*.py` - All test files follow `test_` prefix convention
+- **Affix Data**: `data/affixes_filipino/` - prefix.txt, infix.txt, suffix.txt
+- **Expansions**: Large JSON files in `data/expansions/` (gitignored, regenerate with `scripts/build_tokenizer_expansions.py`)
+
+### Import Conventions
+
+All Python files use consistent path setup:
+```python
+from pathlib import Path
+import sys
+# Add src to path
+sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+```
+
+For scripts that work in containers (`/workspace/`) and locally:
+```python
+workspace_src = Path("/workspace/src")
+local_src = Path(__file__).parent.parent / "src"
+src_path = workspace_src if workspace_src.exists() else local_src
+sys.path.insert(0, str(src_path))
+```
+
+### Pre-commit Hooks
+
+Install development tools:
+```bash
+pip install pre-commit black isort flake8
+pre-commit install
+```
+
+Hooks automatically:
+- Format code with Black (100 char line length)
+- Sort imports with isort
+- Check for large files (>5MB)
+- Prevent committing large expansion JSONs to src/
+- Validate test naming conventions
+
+Run manually: `pre-commit run --all-files`
+
+### Testing
+
+Run all tests:
+```bash
+python -m pytest tests/
+```
+
+Verify setup:
+```bash
+python tests/test_verify_setup.py
 ```
 
 ---

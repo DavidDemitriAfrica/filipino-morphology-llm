@@ -176,7 +176,9 @@ Tests character-level understanding across diverse operations.
 CUTE is loaded from HuggingFace and saved locally:
 
 ```bash
-python scripts/generate_benchmark_variants.py
+python scripts/generate_benchmarks.py  # Generates all benchmarks including CUTE
+# Or standalone:
+python src/evaluation/datasets/scripts/generate_cute_benchmark.py
 ```
 
 Output: `data/benchmarks/cute_gen.jsonl` (1,400 samples, subsampled to 100 per task type)
@@ -224,7 +226,11 @@ Many benchmarks are available in both MCQ and GEN formats. Use `scripts/generate
 ### Usage
 
 ```bash
-python scripts/generate_benchmark_variants.py
+# Automatically called by:
+python scripts/generate_benchmarks.py
+
+# Or run standalone:
+python src/evaluation/datasets/scripts/generate_benchmark_variants.py
 ```
 
 ### Output
@@ -255,11 +261,8 @@ Creates/updates these files:
 ### Step 1: Generate All Benchmarks
 
 ```bash
-# Generate base benchmarks
+# Generate all benchmarks (includes variants)
 python scripts/generate_benchmarks.py
-
-# Generate additional format variants (MCQ/GEN conversions)
-python scripts/generate_benchmark_variants.py
 ```
 
 This creates all benchmark files in `data/benchmarks/`:

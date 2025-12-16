@@ -120,9 +120,14 @@ When using `--eval-mode mcq` or `--eval-mode gen`, benchmarks that don't match t
 
 ## Generation Scripts
 
-To regenerate benchmark variants:
+Benchmark variants are automatically generated when running:
 ```bash
-python scripts/generate_benchmark_variants.py
+python scripts/generate_benchmarks.py
+```
+
+Or you can generate variants standalone:
+```bash
+python src/evaluation/datasets/scripts/generate_benchmark_variants.py
 ```
 
 This will:
