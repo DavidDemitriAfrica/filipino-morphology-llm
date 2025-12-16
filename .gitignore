@@ -44,6 +44,7 @@ Thumbs.db
 # Data (large files)
 data/corpora/*.bin
 data/corpora/*.mmap
+data/expansions/*.json
 *.mmap
 *.pkl
 *.npy

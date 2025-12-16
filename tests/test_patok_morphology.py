@@ -10,7 +10,7 @@ sys.path.insert(0, 'src')
 
 import tiktoken
 from transformers import AutoTokenizer
-from tokenization.patok_morphology import MorphologyAwarePatokProcessor
+from tokenization.patok_processor import MorphologyAwarePatokProcessor
 
 
 def print_tokens(label, token_ids, tokenizer):

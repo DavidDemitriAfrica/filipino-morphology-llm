@@ -237,8 +237,8 @@ def preprocess_stochastok(args, input_path):
     # Import StochastokProcessor
     try:
         import sys
-        sys.path.insert(0, "/workspace/src/tokenization")
-        from stochastok_processor import StochastokProcessor
+        sys.path.insert(0, "/workspace/src")
+        from tokenization.stochastok_processor import StochastokProcessor
         
         processor = StochastokProcessor(tokenizer, expand_prop=args.expand_prop)
         print(f"✓ StochastokProcessor initialized")

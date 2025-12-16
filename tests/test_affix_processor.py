@@ -1,19 +1,24 @@
 """
 Test script for affix-aware token processing
 """
+import sys
+sys.path.insert(0, 'src')
+
 import tiktoken
-from patok_processor import PatokProcessor
+from tokenization.patok_processor import MorphologyAwarePatokProcessor
 
 def test_affix_processing():
     # Initialize tokenizer
     tokenizer = tiktoken.get_encoding("gpt2")
     
     # Initialize processor
-    processor = PatokProcessor(
+    processor = MorphologyAwarePatokProcessor(
         tokenizer=tokenizer,
         expand_prop=0.5,
         contract_prop=0.5,
-        affixes_file="data/affixes/filipino_affixes.txt"
+        prefix_file="data/affixes_filipino/prefix.txt",
+        infix_file="data/affixes_filipino/infix.txt",
+        suffix_file="data/affixes_filipino/suffix.txt"
     )
     
     # Test text with Filipino affixes

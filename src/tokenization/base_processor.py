@@ -85,7 +85,7 @@ class TokenizerProcessor:
         Get the full path for a cache file in the project root data directory.
         
         Args:
-            subdirectory: Subdirectory under data/ (e.g., "tokenizer_expansions")
+            subdirectory: Subdirectory under data/ (e.g., "expansions")
             filename: Name of the cache file
             
         Returns:

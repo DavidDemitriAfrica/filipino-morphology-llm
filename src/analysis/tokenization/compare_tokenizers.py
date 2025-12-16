@@ -18,7 +18,7 @@ sys.path.insert(0, '.')
 import tiktoken
 from typing import List, Dict
 from collections import defaultdict
-from src.tokenization.patok_morphology import MorphologyAwarePatokProcessor
+from src.tokenization.patok_processor import MorphologyAwarePatokProcessor
 
 
 def load_annotations(file_path: str, limit: int = 100) -> List[Dict]:
