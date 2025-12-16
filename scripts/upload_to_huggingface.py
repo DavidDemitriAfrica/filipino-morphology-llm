@@ -125,7 +125,11 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 ```bibtex
 @misc{{gemma2-filipino-cpt-2025,
   title={{Morphology-Aware Tokenization for Filipino Language Models}},
-  author={{Africa, David Demitri}},
+  author={{Africa, David Demitri and
+           Montalan, Jann Railey and
+           Gamboa, Lance Calvin and
+           Susanto, Yosephine and
+           Ngui, Jian Gang}},
   year={{2025}},
   publisher={{HuggingFace}},
   url={{https://huggingface.co/{config['repo_id']}}}
