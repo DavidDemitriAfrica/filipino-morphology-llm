@@ -4,14 +4,12 @@ Test script for morphology-aware Patok tokenizer.
 
 Tests the implementation from colleague using Filipino example sentences.
 """
-
-import sys
-sys.path.insert(0, 'src')
+from setup_paths import setup_project_paths
+setup_project_paths()
 
 import tiktoken
 from transformers import AutoTokenizer
 from tokenization.patok_morphology import MorphologyAwarePatokProcessor
-
 
 def print_tokens(label, token_ids, tokenizer):
     """Pretty print token IDs and their string representations."""
@@ -29,7 +27,6 @@ def print_tokens(label, token_ids, tokenizer):
     print(f"  Token IDs: {token_ids}")
     print(f"  Tokens: {tokens}")
     print(f"  Length: {len(token_ids)} tokens")
-
 
 def main():
     print("=" * 80)
@@ -61,10 +58,9 @@ def main():
         print("\n2. Initializing Morphology-Aware Patok Processor...")
         patok = MorphologyAwarePatokProcessor(
             tokenizer,
-            prefix_file='./src/tokenization/affixes/prefix.txt',
-            infix_file='./src/tokenization/affixes/infix.txt',
-            suffix_file='./src/tokenization/affixes/suffix.txt',
-            expansions_file = './src/tokenization/expansions/expansions_gpt_oss.json'
+            prefix_file='data/affixes_filipino/prefix.txt',
+            infix_file='data/affixes_filipino/infix.txt',
+            suffix_file='data/affixes_filipino/suffix.txt',
         )
 
         # Process with Patok
@@ -107,11 +103,9 @@ def main():
                 ]
             print(f"  Preserved affixes: {affix_strs}")
 
-
     print("\n" + "=" * 80)
     print("Testing Complete!")
     print("=" * 80)
-
 
 if __name__ == "__main__":
     main()

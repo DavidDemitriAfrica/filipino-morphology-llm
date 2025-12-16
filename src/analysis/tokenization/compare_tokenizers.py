@@ -10,16 +10,24 @@ Metrics:
 - Boundary F1: Precision and recall
 - Example-level analysis
 """
+from pathlib import Path
+import sys
+# Add src to path  
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root / 'src'))
+
+from pathlib import Path
+import sys
+# Add src to path  
+project_root = Path(__file__).parent.parent
 
 import json
 import sys
-sys.path.insert(0, '.')
 
 import tiktoken
 from typing import List, Dict
 from collections import defaultdict
 from src.tokenization.patok_morphology import MorphologyAwarePatokProcessor
-
 
 def load_annotations(file_path: str, limit: int = 100) -> List[Dict]:
     """Load morpheme annotations."""
@@ -31,13 +39,11 @@ def load_annotations(file_path: str, limit: int = 100) -> List[Dict]:
             annotations.append(json.loads(line))
     return annotations
 
-
 def tokenize_word(word: str, tokenizer) -> List[str]:
     """Tokenize word and return tokens as strings."""
     token_ids = tokenizer.encode(word)
     tokens = [tokenizer.decode([tid]) for tid in token_ids]
     return tokens
-
 
 def tokenize_patok_style(word: str, morpheme_boundaries: List[int], tokenizer) -> List[str]:
     """
@@ -62,7 +68,6 @@ def tokenize_patok_style(word: str, morpheme_boundaries: List[int], tokenizer) -
 
     return all_tokens
 
-
 def find_token_boundaries(word: str, tokens: List[str]) -> List[int]:
     """Find character positions of token boundaries."""
     boundaries = []
@@ -72,7 +77,6 @@ def find_token_boundaries(word: str, tokens: List[str]) -> List[int]:
         if pos < len(word):
             boundaries.append(pos)
     return boundaries
-
 
 def compute_boundary_f1(token_boundaries: set, morpheme_boundaries: set) -> Dict[str, float]:
     """Compute precision, recall, and F1 for boundary detection."""
@@ -96,7 +100,6 @@ def compute_boundary_f1(token_boundaries: set, morpheme_boundaries: set) -> Dict
         'recall': recall,
         'f1': f1
     }
-
 
 def analyze_tokenizer(annotations: List[Dict], tokenizer, mode: str = "baseline", patok_processor=None) -> Dict:
     """
@@ -190,7 +193,6 @@ def analyze_tokenizer(annotations: List[Dict], tokenizer, mode: str = "baseline"
         'results': results
     }
 
-
 def print_comparison(gpt2_analysis: Dict, patok_analysis: Dict):
     """Print side-by-side comparison."""
     print()
@@ -277,7 +279,6 @@ def print_comparison(gpt2_analysis: Dict, patok_analysis: Dict):
 
     print()
 
-
 def print_examples(gpt2_analysis: Dict, patok_analysis: Dict, n: int = 10):
     """Print side-by-side examples."""
     print("=" * 80)
@@ -306,7 +307,6 @@ def print_examples(gpt2_analysis: Dict, patok_analysis: Dict, n: int = 10):
             print(f"               ✓ Less fragmented")
 
         print()
-
 
 def main():
     print("=" * 80)
@@ -400,7 +400,6 @@ def main():
     print("=" * 80)
     print("✅ TOKENIZATION COMPARISON COMPLETE")
     print("=" * 80)
-
 
 if __name__ == '__main__':
     main()

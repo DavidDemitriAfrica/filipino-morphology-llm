@@ -4,10 +4,8 @@ Demonstration of Word Length Filtering in PACUTE
 This script demonstrates how minimum word length filtering improves
 the quality of generated tasks, especially for manipulation tasks.
 """
-
-import sys
-import os
-sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
+from setup_paths import setup_project_paths
+setup_project_paths()
 
 import pandas as pd
 from pacute.composition import create_composition_dataset

@@ -1,6 +1,7 @@
-import sys
-import os
-sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
+
+
+from setup_paths import setup_project_paths
+setup_project_paths()
 
 import pandas as pd
 from pacute.affixation import create_affixation_dataset

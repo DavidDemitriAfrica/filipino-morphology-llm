@@ -16,15 +16,21 @@ Usage:
     
     # Dataset analysis
     python scripts/run_analysis.py datasets compare --baseline raileymontalan/SEA-PILE-v2-tl-tokenized
+    
+    # Inference analysis
+    python scripts/run_analysis.py inference results.jsonl --format mcq
+    
+    # Visualizations
+    python scripts/run_analysis.py visualize results_dir/ --output plots/
 """
+from setup_paths import setup_project_paths
+setup_project_paths()
 
 import sys
 import argparse
 from pathlib import Path
 
 # Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
-
 
 def run_tokenization_simple(args):
     """Run simple tokenization analysis."""
@@ -42,7 +48,6 @@ def run_tokenization_simple(args):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     module.main()
-
 
 def run_tokenization_comprehensive(args):
     """Run comprehensive tokenization analysis."""
@@ -62,7 +67,6 @@ def run_tokenization_comprehensive(args):
     spec.loader.exec_module(module)
     module.main()
 
-
 def run_tokenization_compare(args):
     """Run tokenizer comparison."""
     from analysis.tokenization import compare_tokenizers
@@ -80,7 +84,6 @@ def run_tokenization_compare(args):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     module.main()
-
 
 def run_affix_coverage(args):
     """Run affix coverage analysis."""
@@ -102,7 +105,6 @@ def run_affix_coverage(args):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     module.main()
-
 
 def run_dataset_compare(args):
     """Run dataset comparison."""
@@ -126,7 +128,6 @@ def run_dataset_compare(args):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     module.main()
-
 
 def main():
     parser = argparse.ArgumentParser(
@@ -191,6 +192,21 @@ def main():
     compare_ds_parser.add_argument('--num-samples', type=int, help='Number of samples to compare')
     compare_ds_parser.add_argument('--output', type=str, help='Output file for results')
     
+    # Inference analysis
+    inference_parser = subparsers.add_parser('inference', help='Analyze inference results')
+    inference_parser.add_argument('file', type=str, help='Inference results file (JSONL)')
+    inference_parser.add_argument('--format', type=str, choices=['mcq', 'generative'], 
+                                 default='mcq', help='Result format')
+    inference_parser.add_argument('--output', type=str, help='Output file for analysis')
+    
+    # Visualizations
+    viz_parser = subparsers.add_parser('visualize', help='Create visualizations')
+    viz_parser.add_argument('results_dir', type=str, help='Directory with evaluation results')
+    viz_parser.add_argument('--output', type=str, default='plots/', 
+                           help='Output directory for plots')
+    viz_parser.add_argument('--format', type=str, choices=['png', 'pdf', 'svg'], 
+                           default='png', help='Output format')
+    
     args = parser.parse_args()
     
     if not args.category:
@@ -220,9 +236,46 @@ def main():
         else:
             dataset_parser.print_help()
     
+    elif args.category == 'inference':
+        run_inference_analysis(args)
+    
+    elif args.category == 'visualize':
+        run_visualizations(args)
+    
     else:
         parser.print_help()
 
+def run_inference_analysis(args):
+    """Run inference results analysis."""
+    from analysis.inference_analysis import analyze_mcq_results, analyze_generative_results, load_inference_results
+    
+    print(f"Loading inference results from: {args.file}")
+    results = load_inference_results(args.file)
+    
+    if args.format == 'mcq':
+        analyze_mcq_results(results, output_file=args.output)
+    else:
+        analyze_generative_results(results, output_file=args.output)
+
+def run_visualizations(args):
+    """Create visualizations from results."""
+    from analysis.visualizations import create_all_visualizations
+    from pathlib import Path
+    
+    results_dir = Path(args.results_dir)
+    output_dir = Path(args.output)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    print(f"Creating visualizations from: {results_dir}")
+    print(f"Output directory: {output_dir}")
+    print(f"Format: {args.format}")
+    
+    create_all_visualizations(
+        results_dir=str(results_dir),
+        output_dir=str(output_dir),
+        fmt=args.format
+    )
+    print(f"✓ Visualizations saved to {output_dir}")
 
 if __name__ == '__main__':
     main()
